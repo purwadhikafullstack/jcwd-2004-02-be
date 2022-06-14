@@ -1,0 +1,21 @@
+{
+  "name": "cr8",
+  "price": "12010",
+  "brand_id": 1,
+  "type_id": 1,
+  "description": {
+    "indikasi/kegunaan": "Untuk mengobati batu berdahak, batuk karena flu, batuk karena asma, bronkitis akut atau kronis"
+  },
+  "warning": {
+    "indikasi/kegunaan": "Untuk mengobati batu berdahak, batuk karena flu, batuk karena asma, bronkitis akut atau kronis"
+  },
+  "usage": {
+    "indikasi/kegunaan": "Untuk mengobati batu berdahak, batuk karena flu, batuk karena asma, bronkitis akut atau kronis"
+  },
+  "stock": 10,
+  "unit": "cair",
+  "expired_at": "2022-06-13 14:55:57",
+  "symptom": [1, 2],
+  "brand": 2,
+  "category": [1, 2]
+}
