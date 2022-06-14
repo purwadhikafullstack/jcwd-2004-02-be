@@ -163,4 +163,110 @@ module.exports = {
       return res.status(500).send({ message: error.message || error });
     }
   },
+  // edit product stock per tanggal expire
+  editProductsStock: async (req, res) => {
+    console.log("ini req.body", req.body);
+
+    const data = JSON.parse(req.body.data);
+    const { stock_id } = req.params;
+
+    console.log(data);
+    let conn, sql;
+    try {
+      conn = dbCon.promise();
+
+      // get ID
+      let sql = `select * from stock where id = ?`;
+      let [result] = await conn.query(sql, [stock_id]);
+      if (!result.length) {
+        throw { message: "id tidak ditemukan" };
+      }
+
+      sql = `update stock set ? where id = ?`;
+
+      // let [result1] = await conn.query(sql, [data, stock_id]);
+      // if (!result1.length) {
+      //   throw { message: "id tidak ditemukan" };
+      // }
+      let editDataStock = {
+        stock: data.stock,
+        expired: data.expired,
+      };
+      await conn.query(sql, [editDataStock, stock_id]);
+
+      return res.status(200).send({ message: "Berhasil Update Stock Obat" });
+    } catch (error) {
+      console.log(error);
+      return res.status(500).send({ message: error.message || error });
+    }
+  },
+
+  // masih single
+  editProductsSymptom: async (req, res) => {
+    console.log("ini req.body", req.body);
+    let path = "/products";
+
+    const { products } = req.files;
+    const { symptom_product_id } = req.params;
+
+    console.log(products);
+    let conn, sql;
+    try {
+      conn = dbCon.promise();
+
+      // get ID
+      sql = `select * from symptom_product where id = ?`;
+      let [result] = await conn.query(sql, [symptom_product_id]);
+      if (!result.length) {
+        throw { message: "id tidak ditemukan" };
+      }
+
+      sql = `update symptom_product set ? where id = ?`;
+
+      let editDataSymptom = {
+        symptom: data.symptom,
+      };
+      await conn.query(sql, [editDataSymptom, symptom_product_id]);
+
+      return res.status(200).send({ message: "Berhasil Update Obat" });
+    } catch (error) {
+      console.log(error);
+      if (imagePath) {
+        fs.unlinkSync("./public" + imagePath);
+      }
+      return res.status(500).send({ message: error.message || error });
+    }
+  },
+
+  deleteProducts: async (req, res) => {
+    console.log("ini req.body", req.body);
+
+    const data = JSON.parse(req.body.data);
+    const { products } = req.files;
+    const { id } = req.params;
+
+    console.log(products);
+    let conn, sql;
+    try {
+      conn = dbCon.promise();
+
+      // get ID
+      let sql = `select * from product where id = ?`;
+      let [result] = await conn.query(sql, [id]);
+      if (!result.length) {
+        throw { message: "id tidak ditemukan" };
+      }
+
+      sql = `delete product set ? where id = ?`;
+      let [result1] = await conn.query(sql, [data, id]);
+      if (!result1.length) {
+        throw { message: "id tidak ditemukan" };
+      }
+
+      return res.status(200).send({ message: "Berhasil Menghapus Obat" });
+    } catch (error) {
+      console.log(error);
+      return res.status(500).send({ message: error.message || error });
+    }
+  },
 };
