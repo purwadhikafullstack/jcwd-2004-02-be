@@ -4,7 +4,7 @@ const dbCon = mysql.createPool({
   host: "localhost",
   user: "root",
   password: "rakan123",
-  database: "mydb",
+  database: "finalproject_ecommerce",
   prt: 3306,
   connectionLimit: 10,
 });

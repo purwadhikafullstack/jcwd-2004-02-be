@@ -7,6 +7,7 @@ const upload = require("../lib/upload");
 const {
   editProductsPicture,
   editProductsStock,
+  deleteProductsStock,
 } = require("../controllers/productControllers");
 
 const uploader = upload("/products", "PRODUCT").fields([
@@ -34,5 +35,7 @@ Router.post("/", uploader, addProducts);
 Router.put("/:id", uploader, editProducts);
 Router.put("/pic/:product_image_id", uploader, editProductsPicture);
 Router.put("/stock/:stock_id", uploader, editProductsStock);
-Router.delete("/deleteproduct/:id", deleteProducts);
+Router.delete("/deleteproducts/:id", deleteProducts);
+Router.delete("/deleteproductsstock/:id", deleteProductsStock);
+
 module.exports = Router;

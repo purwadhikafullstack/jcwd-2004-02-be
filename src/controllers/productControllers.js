@@ -1,20 +1,14 @@
 const { dbCon } = require("./../connections");
 const fs = require("fs");
-const { json } = require("body-parser");
 
 module.exports = {
   addProducts: async (req, res) => {
-    // console.log("ini req.body", req.body);
+    console.log("ini req.body", req.body);
     let path = "/products";
 
     const data = JSON.parse(req.body.data);
     console.log("ini data", data);
     const { products } = req.files;
-
-    // const imagePath = products ? `${path}/${products[0].filename}` : null;
-    // if (!imagePath) {
-    //   return res.status(500).send({ message: "Foto tidak ada" });
-    // }
 
     // looping filename
     const imagePaths = products.map((val) => {
@@ -39,8 +33,17 @@ module.exports = {
         description: JSON.stringify(data.description),
         warning: JSON.stringify(data.warning),
         usage: JSON.stringify(data.usage),
+        quantity: data.quantity,
         unit: data.unit,
-        brand_id: data.brand,
+        expired_at: data.expired_at,
+        no_BPOM: data.no_BPOM,
+        hargaJual: data.hargaJual,
+        hargaBeli: data.hargaBeli,
+        no_obat: data.no_obat,
+        is_deleted: data.is_deleted,
+
+        brand_id: data.brand_id,
+        type_id: data.type_id,
       };
 
       let [resultProd] = await conn.query(sql, insertData);
@@ -94,7 +97,7 @@ module.exports = {
     const { id } = req.params;
 
     console.log(products);
-    res.send("berhasil");
+    // res.send("berhasil");
     let conn, sql;
     try {
       conn = dbCon.promise();
@@ -257,13 +260,50 @@ module.exports = {
         throw { message: "id tidak ditemukan" };
       }
 
-      sql = `delete product set ? where id = ?`;
-      let [result1] = await conn.query(sql, [data, id]);
+      sql = `delete from name where id = ?`;
+
+      let [result1] = await conn.query(sql, [id]);
       if (!result1.length) {
         throw { message: "id tidak ditemukan" };
       }
 
       return res.status(200).send({ message: "Berhasil Menghapus Obat" });
+    } catch (error) {
+      console.log(error);
+      return res.status(500).send({ message: error.message || error });
+    }
+  },
+  deleteProductsStock: async (req, res) => {
+    console.log("ini req.body", req.body);
+
+    const data = JSON.parse(req.body.data);
+    const { stock_id } = req.params;
+
+    console.log(data);
+    let conn, sql;
+    try {
+      conn = dbCon.promise();
+
+      // get ID
+      let sql = `select * from stock where id = ?`;
+      let [result] = await conn.query(sql, [stock_id]);
+      console.log("INI", id);
+      if (!result.length) {
+        throw { message: "id tidak ditemukan" };
+      }
+
+      sql = `delete stock set ? where id = ?`;
+      // let [result1] = await conn.query(sql, [data, stock_id]);
+      // if (!result1.length) {
+      //   throw { message: "id tidak ditemukan" };
+      // }
+      let editDataStock = {
+        stock: data.stock,
+        expired: data.expired,
+      };
+      await conn.query(sql, [editDataStock, stock_id]);
+
+      return res.status(200).send({ message: "Berhasil Delete Stock Obat" });
     } catch (error) {
       console.log(error);
       return res.status(500).send({ message: error.message || error });
