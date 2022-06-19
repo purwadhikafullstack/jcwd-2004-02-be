@@ -2,6 +2,31 @@ const { dbCon } = require("./../connections");
 const fs = require("fs");
 
 module.exports = {
+  getComponentObat: async (req, res) => {
+    let conn, sql;
+    try {
+      conn = dbCon.promise();
+      sql = `select id, name from category`;
+      let [category] = await conn.query(sql);
+
+      sql = `select id, name from symptom`;
+      let [symptom] = await conn.query(sql);
+
+      // sql = `select * fro.m unit`;
+      // await conn.query(sql);
+
+      sql = `select id, name from brand`;
+      let [brand] = await conn.query(sql);
+
+      sql = `select id, name from type`;
+      let [type] = await conn.query(sql);
+
+      return res.status(200).send({ category, symptom, brand, type });
+    } catch (error) {
+      console.log(error);
+      return res.status(500).send({ message: error.message || error });
+    }
+  },
   addProducts: async (req, res) => {
     console.log("ini req.body", req.body);
     let path = "/products";
@@ -105,15 +130,15 @@ module.exports = {
       // get ID
       let sql = `select * from product where id = ?`;
       let [result] = await conn.query(sql, [id]);
-      if (!result.length) {
-        throw { message: "id tidak ditemukan" };
-      }
+      // if (!result.length) {
+      //   throw { message: "id tidak ditemukan" };
+      // }
 
       sql = `update product set ? where id = ?`;
       let [result1] = await conn.query(sql, [data, id]);
-      if (!result1.length) {
-        throw { message: "id tidak ditemukan" };
-      }
+      // if (!result1.length) {
+      //   throw { message: "id tidak ditemukan" };
+      // }
 
       return res.status(200).send({ message: "Berhasil Update Obat" });
     } catch (error) {
@@ -260,12 +285,12 @@ module.exports = {
         throw { message: "id tidak ditemukan" };
       }
 
-      sql = `delete from name where id = ?`;
+      sql = `delete product set ? where id = ?`;
 
-      let [result1] = await conn.query(sql, [id]);
-      if (!result1.length) {
-        throw { message: "id tidak ditemukan" };
-      }
+      let [result1] = await conn.query(sql, [data, id]);
+      // if (!result1.length) {
+      //   throw { message: "id tidak ditemukan" };
+      // }
 
       return res.status(200).send({ message: "Berhasil Menghapus Obat" });
     } catch (error) {

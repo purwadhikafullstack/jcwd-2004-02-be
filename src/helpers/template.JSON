@@ -26,3 +26,30 @@
   "stock": 10,
   "expired": "2022-06-14 14:55:57"
 }
+
+
+// EDIT
+{
+  "name": "amoxan",
+  "price": 50000,
+
+  "description": {
+    "indikasi/kegunaan": "Untuk mengobati batu berdahak, batuk karena flu, batuk karena asma, bronkitis akut atau kronis"
+  },
+  "warning": {
+    "indikasi/kegunaan": "Untuk mengobati batu berdahak, batuk karena flu, batuk karena asma, bronkitis akut atau kronis"
+  },
+  "usage": {
+    "indikasi/kegunaan": "Untuk mengobati batu berdahak, batuk karena flu, batuk karena asma, bronkitis akut atau kronis"
+  },
+  "quantity": 100,
+  "unit": "cair",
+  "expired_at": "2022-06-14 14:55:57",
+  "brand_id": 1,
+  "type_id": 1,
+  "no_BPOM": 696969,
+  "hargaJual": 50000,
+  "hargaBeli": 45000,
+  "no_obat": 123456,
+  "is_deleted": 0,
+}

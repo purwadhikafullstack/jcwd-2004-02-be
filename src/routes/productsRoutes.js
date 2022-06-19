@@ -8,6 +8,7 @@ const {
   editProductsPicture,
   editProductsStock,
   deleteProductsStock,
+  getComponentObat,
 } = require("../controllers/productControllers");
 
 const uploader = upload("/products", "PRODUCT").fields([
@@ -37,5 +38,6 @@ Router.put("/pic/:product_image_id", uploader, editProductsPicture);
 Router.put("/stock/:stock_id", uploader, editProductsStock);
 Router.delete("/deleteproducts/:id", deleteProducts);
 Router.delete("/deleteproductsstock/:id", deleteProductsStock);
+Router.get("/component", getComponentObat);
 
 module.exports = Router;
