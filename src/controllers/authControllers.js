@@ -180,5 +180,79 @@ module.exports = {
             console.log(error)
             return res.status(200).send({message: error.message||error})
         }
+    }, 
+    resetPassword: async(req,res) => {
+        const {id} = req.user 
+        const {newPassword} = req.body 
+        console.log(id)
+        let conn,sql
+
+        try {
+            conn = await dbCon.promise().getConnection()
+            
+            sql = `update users set ? where id =?` 
+            let updateNewPass = { 
+                password: hashPass(newPassword)
+            } 
+
+            await conn.query(sql, [updateNewPass, id]) 
+            
+            conn.release()
+            return res.status(200).send({message: 'reset password success'})
+        } catch (error) { 
+            console.log(error)
+            return res.status(500).send({message: error.message || error})
+        }
     },
+    forgotPassword: async (req,res) => {
+        try {
+            const {
+                data: userData,
+               
+            } = await forgetPasswordService(req.body)  
+
+            let timecreated = new Date().getTime() 
+
+            const dataToken = {
+                id: userData.id, 
+                name: userData.name, 
+                email: userData.email,
+                timecreated
+            }  
+
+            let sukses = myCache.set(userData.email, dataToken, 5*60) 
+            if(!sukses){
+                throw {message: 'error caching'}
+            }
+
+            const tokenEmail= createJwtEmail(dataToken) 
+
+            console.log('ini token email ya',tokenEmail)
+
+            const host = 
+                process.env.NODE_ENV === 'production' 
+                    ? 'http://namadomainfe' 
+                    : 'http://localhost:3000'
+                const link = `${host}/forgotPassword/${tokenEmail}` 
+                let filePath = path.resolve(__dirname,'../templates/forgotTemplate.html')
+                let htmlString = fs.readFileSync(filePath, 'utf-8') 
+                console.log(htmlString) 
+                const template = handlebars.compile(htmlString)
+                const htmlToEmail = template ({
+                    name : userData.name,  
+                    link
+                }) 
+                transporter.sendMail({
+                    from: 'Healthymed<andhikapraset@gmail.com>',
+                    to: 'andhikapraset@gmail.com',
+                    subject: 'Link Email Forgot Password',
+                    html: htmlToEmail,
+                })  
+                console.log(transporter.sendMail)
+                return res.status(200).send(userData)
+        } catch (error) { 
+            console.log(error)
+            return res.status(500).send({message: error.message || error})
+        }
+    }
 }
