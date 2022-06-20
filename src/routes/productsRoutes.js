@@ -33,10 +33,10 @@ const uploader = upload("/products", "PRODUCT").fields([
 
 // Router.post("/", verifyTokenAccess, validateAdmin, uploader, addProducts);
 Router.post("/addproduct", uploader, addProducts);
-Router.put("/:id", uploader, editProducts);
-Router.put("/pic/:product_image_id", uploader, editProductsPicture);
-Router.put("/stock/:stock_id", uploader, editProductsStock);
 Router.patch("/deleteproducts/:id", deleteProducts);
-Router.get("/component", getComponentObat);
+// Router.put("/:id", uploader, editProducts);
+// Router.put("/pic/:product_image_id", uploader, editProductsPicture);
+// Router.put("/stock/:stock_id", uploader, editProductsStock);
+// Router.get("/component", getComponentObat);
 
 module.exports = Router;
