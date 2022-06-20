@@ -34,11 +34,14 @@ module.exports = {
     const data = JSON.parse(req.body.data);
     console.log("ini data", data);
     const { products } = req.files;
+    console.log("files", req.files);
 
     // looping filename
-    const imagePaths = products.map((val) => {
-      return `${path}/${val.filename}`;
-    });
+    const imagePaths = products
+      ? products.map((val) => {
+          return `${path}/${val.filename}`;
+        })
+      : [];
 
     // Proteksi tidak ada foto
     if (!imagePaths.length) {
@@ -265,32 +268,20 @@ module.exports = {
       return res.status(500).send({ message: error.message || error });
     }
   },
-
   deleteProducts: async (req, res) => {
-    console.log("ini req.body", req.body);
-
-    const data = JSON.parse(req.body.data);
-    const { products } = req.files;
     const { id } = req.params;
 
-    console.log(products);
     let conn, sql;
     try {
-      conn = dbCon.promise();
+      conn = await dbCon.promise().getConnection();
+      console.log("this is product id", id);
 
       // get ID
-      let sql = `select * from product where id = ?`;
-      let [result] = await conn.query(sql, [id]);
-      if (!result.length) {
-        throw { message: "id tidak ditemukan" };
-      }
 
-      sql = `delete product set ? where id = ?`;
+      sql = `update product set is_deleted = 1 where id = ?`;
+      await conn.query(sql, id);
 
-      let [result1] = await conn.query(sql, [data, id]);
-      // if (!result1.length) {
-      //   throw { message: "id tidak ditemukan" };
-      // }
+      conn.release();
 
       return res.status(200).send({ message: "Berhasil Menghapus Obat" });
     } catch (error) {
@@ -298,40 +289,84 @@ module.exports = {
       return res.status(500).send({ message: error.message || error });
     }
   },
-  deleteProductsStock: async (req, res) => {
-    console.log("ini req.body", req.body);
 
-    const data = JSON.parse(req.body.data);
-    const { stock_id } = req.params;
+  // deleteProducts: async (req, res) => {
+  //   const { id } = req.params;
 
-    console.log(data);
-    let conn, sql;
-    try {
-      conn = dbCon.promise();
+  //   let conn, sql;
+  //   try {
+  //     conn = await dbCon.promise().getConnection();
+  //     console.log("this is product id", id);
+  //     await conn.beginTransaction();
+  //     // get ID
 
-      // get ID
-      let sql = `select * from stock where id = ?`;
-      let [result] = await conn.query(sql, [stock_id]);
-      console.log("INI", id);
-      if (!result.length) {
-        throw { message: "id tidak ditemukan" };
-      }
+  //     sql = `select * from product_image where product_id = ?`;
+  //     const [result] = await conn.query(sql, id);
 
-      sql = `delete stock set ? where id = ?`;
-      // let [result1] = await conn.query(sql, [data, stock_id]);
-      // if (!result1.length) {
-      //   throw { message: "id tidak ditemukan" };
-      // }
-      let editDataStock = {
-        stock: data.stock,
-        expired: data.expired,
-      };
-      await conn.query(sql, [editDataStock, stock_id]);
+  //     sql = `delete from stock where product_id = ?`;
+  //     await conn.query(sql, id);
 
-      return res.status(200).send({ message: "Berhasil Delete Stock Obat" });
-    } catch (error) {
-      console.log(error);
-      return res.status(500).send({ message: error.message || error });
-    }
-  },
+  //     sql = `delete from category_product where product_id = ?`;
+  //     await conn.query(sql, id);
+
+  //     sql = `delete from symptom_product where product_id = ?`;
+  //     await conn.query(sql, id);
+
+  //     // kalau hapus, log minus
+
+  //     sql = `delete from product where id = ?`;
+  //     await conn.query(sql, id);
+
+  //     if (result.length) {
+  //       for (let i = 0; i < result.length; i++) {
+  //         fs.unlinkSync("./public" + result[i].image);
+  //       }
+  //     }
+
+  //     conn.release();
+  //     conn.commit();
+
+  //     return res.status(200).send({ message: "Berhasil Menghapus Obat" });
+  //   } catch (error) {
+  //     conn.rollback();
+  //     conn.release();
+  //     console.log(error);
+  //     return res.status(500).send({ message: error.message || error });
+  //   }
+  //   },
+  //   deleteProductsStock: async (req, res) => {
+  //     console.log("ini req.body", req.body);
+
+  //     const data = JSON.parse(req.body.data);
+  //     const { stock_id } = req.params;
+
+  //     console.log(data);
+  //     let conn, sql;
+  //     try {
+  //       conn = dbCon.promise();
+
+  //       // get ID
+  //       let sql = `select * from stock where id = ?`;
+  //       let [result] = await conn.query(sql, [stock_id]);
+  //       console.log("INI", id);
+  //       if (!result.length) {
+  //         throw { message: "id tidak ditemukan" };
+  //       }
+
+  //       sql = `delete stock set ? where id = ?`;
+  //       // let [result1] = await conn.query(sql, [data, stock_id]);
+  //       // if (!result1.length) {
+  //       //   throw { message: "id tidak ditemukan" };
+  //       // }
+  //       let editDataStock = {
+  //         stock: data.stock,
+  //         expired: data.expired,
+  //       };
+  //       await conn.query(sql, [editDataStock, stock_id]);
+
+  //       return res.status(200).send({ message: "Berhasil Delete Stock Obat" });
+  //     } catch (error) {
+  //       console.log(error);
+  //       return res.status(500).send({ message: error.message || error });
+  //     }
 };
