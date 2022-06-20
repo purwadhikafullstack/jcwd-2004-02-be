@@ -40,5 +40,35 @@ module.exports = {
             console.log(error)
             return res.status(500).send({message:error.message||error})
         }
+    }, 
+    changePassword: async(req,res) => {
+        const {id} = req.user 
+        const {newPassword,oldPassword} = req.body 
+        console.log(id)
+        let conn,sql
+
+        try {
+            conn = await dbCon.promise().getConnection()
+            sql = `select password from users where id = ? and password=?`
+            let [result] = await conn.query(sql,[id,hashPass(oldPassword)])
+            console.log(result)
+            if (!result.length){
+                throw {message: 'Incorrect Password'}
+            } 
+            
+            sql = `update users set ? where id =?` 
+            let updateNewPass = { 
+                password: hashPass(newPassword)
+            } 
+
+            await conn.query(sql, [updateNewPass, id]) 
+            
+            // conn.commit()
+            conn.release()
+            return res.status(200).send({message: 'reset password success'})
+        } catch (error) { 
+            console.log(error)
+            return res.status(500).send({message: error.message || error})
+        }
     }
 }

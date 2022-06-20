@@ -2,12 +2,13 @@ const express = require('express')
 const {verifyTokenAccess} = require('../lib/verifyToken') 
 const Router = express.Router()
 const {authControllers} = require ('../controllers') 
-const { login, keeplogin} = authControllers  
+const { login, keeplogin, changePassword} = authControllers  
 
 
 
 Router.post('/login', login) 
-Router.get('/keepLogin',verifyTokenAccess,keeplogin) 
+Router.get('/keepLogin',verifyTokenAccess,keeplogin)  
+Router.put('/changePassword', verifyTokenAccess, changePassword) 
 
 
 
