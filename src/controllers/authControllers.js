@@ -1,5 +1,5 @@
-const {createJwtAccess} = require('../lib/jwt')  
-const {loginService} = require('../services/authService') 
+const {createJwtAccess, createJwtEmail} = require('../lib/jwt')  
+const {loginService, registerService} = require('../services/authService') 
 const {dbCon} = require('../connections')
 const hashPass = require ('../lib/hashpass')
 
