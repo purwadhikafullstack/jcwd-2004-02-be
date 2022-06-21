@@ -1,0 +1,7 @@
+GET http://localhost:5000/adminproduk/fetchdaftarproduk?page=0 HTTP/1.1
+Content-Type: application/json
+
+###
+
+GET http://localhost:5000/adminproduk/component HTTP/1.1
+Content-Type: application/json
