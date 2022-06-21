@@ -73,6 +73,30 @@ module.exports = {
             // return res.status(500).send({message:error.message || error})
 
         }
+    }, 
+    forgetPasswordService: async (data) => {
+        let {email} = data 
+        let conn,sql 
+
+        try { 
+            conn = await dbCon.promise().getConnection() 
+            sql = `select id from users where email =?` 
+            let [result] = await conn.query(sql,[email])
+            if (!result.length){
+                throw {message: 'user not found'}
+            } 
+
+            sql = `select id, name, is_verified, email from users where email =?`
+            let [userData] = await conn.query(sql, email)
+            console.log('ini userdata', userData)
+            conn.release()
+            return {success: true, data:userData[0]}
+        } catch (error) {
+            conn.rollback()
+            conn.release() 
+            console.log(error)
+            throw new Error(error.message || error)
+        }
     }
     
 }
