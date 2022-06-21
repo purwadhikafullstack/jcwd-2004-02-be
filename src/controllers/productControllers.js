@@ -7,10 +7,10 @@ module.exports = {
     let conn, sql;
     let { search, page, limit, category } = req.query;
 
-    if (!category) {
-      category = 0;
+    if (category) {
+      category = `and category_product.category_id = ${category}`;
     } else {
-      category = parseInt(category);
+      category = ``;
     }
 
     if (!page) {
@@ -21,8 +21,10 @@ module.exports = {
       limit = 10;
     }
 
-    if (!search) {
-      search = "";
+    if (search) {
+      search = `and product.name like '%${search}%'`;
+    } else {
+      search = ``;
     }
 
     let offset = page * parseInt(limit);
@@ -33,23 +35,37 @@ module.exports = {
       await conn.beginTransaction();
 
       // get tabel product & category & stock
-      sql = `select product.id, name, sell_price, buy_price, unit, med_number, bpom_number, category_id, json_arrayagg(category_name) as categories,
+      sql = `select product.id, name, sell_price, buy_price, unit, med_number, bpom_number,
       (select sum(stock) from stock where product_id = product.id) as total_stock from product
       inner join category_product on product.id = category_product.product_id
       left join (select name as category_name, id from category) as kategori on category_id = kategori.id
-      where product.name like '%${search}%'  and category_product.category_id =${category} or not exists (select null from category_product where category_id= ${category}) 
-      group by product.id LIMIT ${dbCon.escape(offset)}, ${dbCon.escape(
-        limit
-      )}`;
+      where true ${search} ${category} group by product.id LIMIT ${dbCon.escape(
+        offset
+      )}, ${dbCon.escape(limit)}`;
       let [result] = await conn.query(sql);
 
-      // count total product
-      sql = `select count (*) as total_product from product`;
-      let [totalProduct] = await conn.query(sql);
+      sql = `select id, name from category_product cp inner join category c on cp.category_id = c.id where product_id = ?`;
+
+      for (let i = 0; i < result.length; i++) {
+        const element = result[i];
+        let [categories] = await conn.query(sql, element.id);
+        result[i].categories = categories;
+      }
+
+      // count tabel product & category & stock
+      sql = `select count(*) as total_data from (select product.id, name, sell_price, buy_price, unit, med_number, bpom_number,
+        (select sum(stock) from stock where product_id = product.id) as total_stock from product
+        inner join category_product on product.id = category_product.product_id
+        left join (select name as category_name, id from category) as kategori on category_id = kategori.id
+        where true ${search} ${category} group by product.id) as table_data`;
+
+      let [totalData] = await conn.query(sql);
 
       await conn.commit();
       conn.release();
-      res.set("x-total-product", totalProduct[0].total_product);
+      // console.log(result);
+      res.set("x-total-product", totalData[0].total_data);
+      console.log(totalData[0].total_data);
       return res.status(200).send(result);
     } catch (error) {
       conn.rollback();
