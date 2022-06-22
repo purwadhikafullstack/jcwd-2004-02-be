@@ -1,5 +1,5 @@
-const { dbCon } = require("../connection");
-const db = require("../connection/mysqldb");
+const { dbCon } = require("../connections");
+const db = require("../connections/mysqldb");
 const { json } = require("body-parser");
 
 module.exports = {
