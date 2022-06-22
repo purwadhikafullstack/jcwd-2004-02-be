@@ -14,6 +14,7 @@ const {
 const uploader = upload("/products", "PRODUCT").fields([
   { name: "products", maxCount: 3 },
 ]);
+
 // const validateAdmin = (req, res, next) => {
 //   if (req.user.roles_id === 1) {
 //     // admin roles_idnya 1
