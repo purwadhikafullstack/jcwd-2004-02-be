@@ -35,7 +35,7 @@ module.exports = {
       await conn.beginTransaction();
 
       // get tabel product & category & stock
-      sql = `select product.id, name, sell_price, buy_price, unit, med_number, bpom_number,
+      sql = `select product.id, name, hargaJual, hargaBeli, unit, no_obat, no_BPOM,
       (select sum(stock) from stock where product_id = product.id) as total_stock from product
       inner join category_product on product.id = category_product.product_id
       left join (select name as category_name, id from category) as kategori on category_id = kategori.id
@@ -53,7 +53,7 @@ module.exports = {
       }
 
       // count tabel product & category & stock
-      sql = `select count(*) as total_data from (select product.id, name, sell_price, buy_price, unit, med_number, bpom_number,
+      sql = `select count(*) as total_data from (select product.id, name, hargaJual, hargaBeli, unit, no_obat, no_BPOM,
         (select sum(stock) from stock where product_id = product.id) as total_stock from product
         inner join category_product on product.id = category_product.product_id
         left join (select name as category_name, id from category) as kategori on category_id = kategori.id
