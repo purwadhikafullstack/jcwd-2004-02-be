@@ -31,8 +31,8 @@ app.use(express.static("public"));
 const { productRoutes } = require("./src/routes");
 const { authRoutes } = require("./src/routes");
 
-app.use("/adminproduk", productRoutes);
 app.use("/auth", authRoutes);
+app.use("/products", productRoutes);
 
 app.listen(PORT, () =>
   console.log(`Server in ${process.env.STATUS} mode, listening on ${PORT}`)
