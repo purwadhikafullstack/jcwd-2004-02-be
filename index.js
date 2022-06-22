@@ -1,7 +1,13 @@
-require("dotenv").config();
+const dotenv = require("dotenv");
+dotenv.config();
+
 const express = require("express");
 const app = express();
-const PORT = process.env.PORT || 5000;
+
+let PORT;
+process.env.STATUS == "development"
+  ? (PORT = process.env.DEV_PORT)
+  : (PORT = process.env.PROD_PORT);
 const cors = require("cors");
 const morgan = require("morgan");
 
@@ -28,17 +34,6 @@ const { authRoutes } = require("./src/routes");
 app.use("/adminproduk", productRoutes);
 app.use("/auth", authRoutes);
 
-app.listen(PORT, () => console.log(`app jalan di ${PORT}`));
-
-//! COMMENT ABIS DI MERGE
-
-// const db = require("./src/models");
-
-// // middleware log
-// const logMiddleware = (req, res, next) => {
-//   console.log(req.method, req.url, new Date().toString());
-//   next();
-// };
-// app.use(logMiddleware);
-
-// buat upload foto dan reserve file
+app.listen(PORT, () =>
+  console.log(`Server in ${process.env.STATUS} mode, listening on ${PORT}`)
+);

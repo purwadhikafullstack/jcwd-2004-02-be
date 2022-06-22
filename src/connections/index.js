@@ -1,3 +1,3 @@
-module.exports = { 
-    dbCon : require('./mysqldb')
-}
+module.exports = {
+  dbCon: require("./mysqldb"),
+};
