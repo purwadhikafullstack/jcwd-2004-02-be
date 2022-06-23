@@ -25,6 +25,7 @@ module.exports = {
       return res.status(500).send({ message: error.message || error });
     }
   },
+
   editProfilePic: async (req, res) => {
     console.log(req.files);
     let path = "/profile";
