@@ -5,3 +5,8 @@ Content-Type: application/json
 
 GET http://localhost:5000/products/component HTTP/1.1
 Content-Type: application/json
+
+###
+
+GET http://localhost:5000/products/getlastproduct HTTP/1.1
+Content-Type: application/json

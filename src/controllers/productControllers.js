@@ -39,7 +39,7 @@ module.exports = {
       (select sum(stock) from stock where product_id = product.id) as total_stock from product
       inner join category_product on product.id = category_product.product_id
       left join (select name as category_name, id from category) as kategori on category_id = kategori.id
-      where true ${search} ${category} group by product.id LIMIT ${dbCon.escape(
+      where true ${search} ${category} and product.is_deleted = 0 group by product.id LIMIT ${dbCon.escape(
         offset
       )}, ${dbCon.escape(limit)}`;
       let [result] = await conn.query(sql);
@@ -65,12 +65,49 @@ module.exports = {
       conn.release();
       // console.log(result);
       res.set("x-total-product", totalData[0].total_data);
-      console.log(totalData[0].total_data);
+      // console.log(totalData[0].total_data);
       return res.status(200).send(result);
     } catch (error) {
       conn.rollback();
       conn.release();
-      console.log(error);
+      // console.log(error);
+      return res.status(500).send({ message: error.message || error });
+    }
+  },
+  getLastProduk: async (req, res) => {
+    let conn, sql;
+    try {
+      conn = await dbCon.promise().getConnection();
+      await conn.beginTransaction();
+
+      // get last tabel product & category & stock
+      sql = `select product.id, name, hargaJual, hargaBeli, unit, no_obat, no_BPOM,
+      (select sum(stock) from stock where product_id = product.id) as total_stock from product
+      inner join category_product on product.id = category_product.product_id
+      left join (select name as category_name, id from category) as kategori on category_id = kategori.id
+      group by product.id ORDER BY ID DESC LIMIT 1`;
+      let [result] = await conn.query(sql);
+
+      sql = `select id, name from category_product cp inner join category c on cp.category_id = c.id where product_id = ?`;
+
+      for (let i = 0; i < result.length; i++) {
+        const element = result[i];
+        let [categories] = await conn.query(sql, element.id);
+        result[i].categories = categories;
+      }
+
+      // count tabel product
+      sql = `select count(*) as total_data from product`;
+      let [totalData] = await conn.query(sql);
+
+      await conn.commit();
+      conn.release();
+      res.set("x-total-product", totalData[0].total_data);
+      return res.status(200).send(result);
+    } catch (error) {
+      conn.rollback();
+      conn.release();
+      // console.log(error);
       return res.status(500).send({ message: error.message || error });
     }
   },
