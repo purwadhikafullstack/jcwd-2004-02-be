@@ -15,15 +15,15 @@ module.exports = {
       sql = `select * from users where email=? and password=?`;
       let [result] = await conn.query(sql, [email, password]);
       console.log(result);
-      if (!result.length) {
-        throw { message: "users not found" };
-      }
+      // if (!result.length) {
+      //   throw { message: "users not found" };
+      // }
 
       // let dataToken = {
-      //     id: result[0].id,
-      //     username: result[0].username
-      // }
-      // let tokenAccess = createJwtAccess(dataToken)
+      //   id: result[0].id,
+      //   username: result[0].username,
+      // };
+      // let tokenAccess = createJwtAccess(dataToken);
 
       conn.release();
       return { success: true, data: result[0] };

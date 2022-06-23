@@ -5,6 +5,7 @@ module.exports = {
   editProfile: async (req, res) => {
     const { name, gender, birthdate } = req.body;
     const { id } = req.user;
+    let birthDate1 = Date.parse(birthdate) / 1000;
 
     let conn, sql;
 
@@ -15,9 +16,12 @@ module.exports = {
       let update = {
         name: name,
         gender: gender,
-        birthdate: birthdate,
       };
       let [result] = await conn.query(sql, [update, id]);
+
+      sql = `update users set birthdate = date_add(from_unixtime(0), INTERVAL ? second) where id = ?`;
+      await conn.query(sql, [birthDate1, id]);
+
       console.log(result, "berhasil update bio");
       return res.status(200).send(result);
     } catch (error) {
