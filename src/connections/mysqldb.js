@@ -1,23 +1,19 @@
-const mysql = require ('mysql2') 
+const mysql = require("mysql2");
 
+const db = mysql.createPool({
+  host: process.env.HOST,
+  user: process.env.USER,
+  password: process.env.PASSWORD,
+  database: process.env.DB,
+  connectionLimit: 10,
+  port: process.env.PORT_DB,
+});
 
-const dbCon = mysql.createPool({
-    host: 'localhost',
-    user: 'root',
-    password: 'andhika1997',
-    database: 'finalproject-e-commerce',
-    connectionLimit: 10,
-    port: 3306 
-}) 
+db.getConnection((err, conn) => {
+  if (err) {
+    console.log("error");
+  }
+  console.log(`connected as id ${conn.threadId}`);
+});
 
-dbCon.getConnection((err,conn)=>{
-    if (err){
-        console.log('error connecting:' + err.stack) 
-        return
-    } 
-    console.log(`connected as id` + conn.threadId) 
-    conn.release()
-}) 
-
-module.exports = dbCon
-
+module.exports = db;
