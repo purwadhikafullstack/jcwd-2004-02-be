@@ -1,7 +1,23 @@
-const { createJwtAccess } = require("../lib/jwt");
-const { loginService } = require("../services/authService");
+const { createJwtAccess, createJwtEmail } = require("../lib/jwt");
+const { loginService, registerService } = require("../services/authService");
 const { dbCon } = require("../connections");
 const hashPass = require("../lib/hashpass");
+const myCache = require("../lib/cache");
+const path = require("path");
+const fs = require("fs");
+const nodemailer = require("nodemailer");
+const handlebars = require("handlebars");
+
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: "andhikapraset@gmail.com",
+    pass: "lmcxxqqjlwzajwdi",
+  },
+  tls: {
+    rejectUnauthorized: false,
+  },
+});
 
 module.exports = {
   login: async (req, res) => {
@@ -88,7 +104,10 @@ module.exports = {
           ? "http://namadomainfe"
           : "http://localhost:3000";
       const link = `${host}/verified/${tokenEmail}`;
-      let filePath = path.resolve(__dirname, "../templates/emailTemplate.html");
+      let filePath = path.resolve(
+        __dirname,
+        "../templates/emailTemplates.html"
+      );
       let htmlString = fs.readFileSync(filePath, "utf-8");
       console.log(htmlString);
       const template = handlebars.compile(htmlString);

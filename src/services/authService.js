@@ -41,10 +41,10 @@ module.exports = {
     let conn, sql;
     try {
       conn = await dbCon.promise().getConnection();
-      let regex = new RegExp(/ /g);
-      if (regex.test(name)) {
-        throw { message: "ada spasi" };
-      }
+      // let regex = new RegExp(/ /g);
+      // if (regex.test(name)) {
+      //   throw { message: "ada spasi" };
+      // }
       await conn.beginTransaction();
       sql = `select id from users where email = ?`;
       let [result] = await conn.query(sql, [email]);
