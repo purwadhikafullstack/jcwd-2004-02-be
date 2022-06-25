@@ -22,8 +22,11 @@ module.exports = {
       sql = `update users set birthdate = date_add(from_unixtime(0), INTERVAL ? second) where id = ?`;
       await conn.query(sql, [birthDate1, id]);
 
-      console.log(result, "berhasil update bio");
-      return res.status(200).send(result);
+      sql = `select name, gender, birthdate from users where id = ?`;
+      let [result1] = await conn.query(sql, [id]);
+
+      console.log(result1, "berhasil update bio");
+      return res.status(200).send(result1);
     } catch (error) {
       console.log(error);
       return res.status(500).send({ message: error.message || error });
