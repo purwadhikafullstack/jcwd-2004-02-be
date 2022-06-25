@@ -1,12 +1,16 @@
 const { createJwtAccess, createJwtEmail } = require("../lib/jwt");
-const { loginService, registerService } = require("../services/authService");
+const {
+  loginService,
+  registerService,
+  forgetPasswordService,
+} = require("../services/authService");
 const { dbCon } = require("../connections");
 const hashPass = require("../lib/hashpass");
-const myCache = require("../lib/cache");
-const path = require("path");
-const fs = require("fs");
 const nodemailer = require("nodemailer");
 const handlebars = require("handlebars");
+const path = require("path");
+const myCache = require("../lib/cache");
+const fs = require("fs");
 
 const transporter = nodemailer.createTransport({
   service: "gmail",
@@ -117,7 +121,7 @@ module.exports = {
       });
       transporter.sendMail({
         from: "Healthymed Email Verification<andhikapraset@gmail.com>",
-        to: "andhikapraset@gmail.com",
+        to: userData.email,
         subject: "Healthymed",
         html: htmlToEmail,
       });
@@ -181,7 +185,7 @@ module.exports = {
       console.log(htmlToEmail);
       transporter.sendMail({
         from: "Healthymed Email Verification<andhikapraset@gmail.com",
-        to: `andhikapraset@gmail.com`,
+        to: email,
         subject: "Link Email Verification",
         hmtl: htmlToEmail,
       });
@@ -254,7 +258,7 @@ module.exports = {
       });
       transporter.sendMail({
         from: "Healthymed<andhikapraset@gmail.com>",
-        to: "andhikapraset@gmail.com",
+        to: userData.email,
         subject: "Link Email Forgot Password",
         html: htmlToEmail,
       });

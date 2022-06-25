@@ -19,7 +19,7 @@ const uploader = upload("/products", "PRODUCT").fields([
 ]);
 
 Router.get("/fetchdaftarproduk", fetchDaftarProduk);
-Router.get("/component", getCategoryObat);
+Router.get("/getcategory", getCategoryObat);
 Router.post("/addproduct", uploader, addProducts);
 Router.patch("/deleteproducts/:id", deleteProducts);
 Router.get("/component", getComponentObat);
