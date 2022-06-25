@@ -29,8 +29,8 @@ module.exports = {
       const { data: userData } = await loginService(req.body);
 
       const dataToken = {
-        id: userData.id,
-        name: userData.name,
+        id: 11,
+        name: "zzx",
       };
       const tokenAccess = createJwtAccess(dataToken);
       res.set("x-token-access", tokenAccess);
