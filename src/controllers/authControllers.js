@@ -263,5 +263,13 @@ module.exports = {
       console.log(error);
       return res.status(500).send({ message: error.message || error });
     }
-  },
+  }, 
+  checkRole: async (req,res) => { 
+    try { 
+        return res.status(200).send(req.user)
+    } catch (error) {
+        console.log(error) 
+        return res.status(500).send({message: error.message || error})
+    }
+  }
 };
