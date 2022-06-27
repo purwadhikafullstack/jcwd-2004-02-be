@@ -26,12 +26,12 @@ const transporter = nodemailer.createTransport({
 module.exports = {
   login: async (req, res) => {
     try {
-      const {data: userData} = await loginService(req.body);
-      console.log('ini data', userData)
+      const { data: userData } = await loginService(req.body);
+      console.log("ini data", userData);
 
       const dataToken = {
-        id: 11,
-        name: "zzx",
+        id: userData.id,
+        name: userData.name,
       };
       const tokenAccess = createJwtAccess(dataToken);
       res.set("x-token-access", tokenAccess);
@@ -41,7 +41,7 @@ module.exports = {
       return res.status(500).send({ message: error.message || error });
     }
   },
-  
+
   keeplogin: async (req, res) => {
     const { id } = req.user;
     let conn, sql;
@@ -110,10 +110,7 @@ module.exports = {
           ? "http://namadomainfe"
           : "http://localhost:3000";
       const link = `${host}/verified/${tokenEmail}`;
-      let filePath = path.resolve(
-        __dirname,
-        "../templates/emailTemplates.html"
-      );
+      let filePath = path.resolve(__dirname, "../templates/emailTemplate.html");
       let htmlString = fs.readFileSync(filePath, "utf-8");
       console.log(htmlString);
       const template = handlebars.compile(htmlString);

@@ -2,15 +2,15 @@ const { dbCon } = require("../connections");
 const fs = require("fs");
 
 module.exports = {
-  editPrescriptionPic: async (req, res) => {
+  addPrescriptionPic: async (req, res) => {
     console.log(req.files);
     let path = "/prescription";
 
     const { image } = req.files;
     const imagepath = image ? `${path}/${image[0].filename}` : null;
-    if (!imagepath) {
-      return res.status(500).send({ Message: "foto tidak ada" });
-    }
+    // if (!imagepath) {
+    //   return res.status(500).send({ Message: "foto tidak ada" });
+    // }
     let conn, sql;
     try {
       conn = await dbCon.promise().getConnection();
@@ -22,9 +22,9 @@ module.exports = {
       if (!result.length) {
         throw { message: "user tidak ditemukan" };
       }
-      sql = "update prescription set ? where id=?";
+      sql = "insert prescription set ? where id=?";
       let update = {
-        profilepic: imagepath,
+        image: imagepath,
       };
       await conn.query(sql, [update, req.user.id]);
       // kalo lewat sini berarti berhasil
