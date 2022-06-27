@@ -13,7 +13,6 @@ const {
   resetPassword,
 } = authControllers;
 const { verifyLastToken } = require("../lib/verifyLastToken");
-
 Router.post("/login", login);
 Router.get("/keepLogin", verifyTokenAccess, keeplogin);
 Router.put("/changePassword", verifyTokenAccess, changePassword);
