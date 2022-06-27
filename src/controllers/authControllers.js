@@ -27,7 +27,8 @@ module.exports = {
 
       const dataToken = {
         id: userData.id,
-        name: userData.name,
+        name: userData.name, 
+        role_id: userData.role_id
       };
       const tokenAccess = createJwtAccess(dataToken);
       res.set("x-token-access", tokenAccess);
