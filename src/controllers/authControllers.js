@@ -26,7 +26,8 @@ const transporter = nodemailer.createTransport({
 module.exports = {
   login: async (req, res) => {
     try {
-      const { data: userData } = await loginService(req.body);
+      const {data: userData} = await loginService(req.body);
+      console.log('ini data', userData)
 
       const dataToken = {
         id: 11,
@@ -40,6 +41,7 @@ module.exports = {
       return res.status(500).send({ message: error.message || error });
     }
   },
+  
   keeplogin: async (req, res) => {
     const { id } = req.user;
     let conn, sql;
