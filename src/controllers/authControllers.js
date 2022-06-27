@@ -1,12 +1,29 @@
 const {createJwtAccess, createJwtEmail} = require('../lib/jwt')  
-const {loginService, registerService} = require('../services/authService') 
+const {loginService, registerService, forgetPasswordService} = require('../services/authService') 
 const {dbCon} = require('../connections')
-const hashPass = require ('../lib/hashpass')
+const hashPass = require ('../lib/hashpass') 
+const nodemailer = require ('nodemailer')  
+const handlebars = require ('handlebars') 
+const path = require ('path') 
+const myCache = require("../lib/cache");
+const fs = require ('fs') 
+
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+      user: 'andhikapraset@gmail.com',
+      pass: 'lmcxxqqjlwzajwdi'
+  }, 
+  tls: {
+      rejectUnauthorized: false
+  }  
+})
 
 module.exports = {
   login: async (req, res) => {
     try {
-      const { data: userData } = await loginService(req.body);
+      const {data: userData} = await loginService(req.body);
+      console.log('ini data', userData)
 
       const dataToken = {
         id: userData.id,
@@ -20,6 +37,7 @@ module.exports = {
       return res.status(500).send({ message: error.message || error });
     }
   },
+  
   keeplogin: async (req, res) => {
     const { id } = req.user;
     let conn, sql;
@@ -98,7 +116,7 @@ module.exports = {
       });
       transporter.sendMail({
         from: "Healthymed Email Verification<andhikapraset@gmail.com>",
-        to: "andhikapraset@gmail.com",
+        to: userData.email,
         subject: "Healthymed",
         html: htmlToEmail,
       });
@@ -162,7 +180,7 @@ module.exports = {
       console.log(htmlToEmail);
       transporter.sendMail({
         from: "Healthymed Email Verification<andhikapraset@gmail.com",
-        to: `andhikapraset@gmail.com`,
+        to: email,
         subject: "Link Email Verification",
         hmtl: htmlToEmail,
       });
@@ -235,7 +253,7 @@ module.exports = {
       });
       transporter.sendMail({
         from: "Healthymed<andhikapraset@gmail.com>",
-        to: "andhikapraset@gmail.com",
+        to: userData.email,
         subject: "Link Email Forgot Password",
         html: htmlToEmail,
       });
