@@ -17,7 +17,7 @@ module.exports = {
         name: name,
         gender: gender,
       };
-      let [result] = await conn.query(sql, [update, id]);
+      await conn.query(sql, [update, id]);
 
       sql = `update users set birthdate = date_add(from_unixtime(0), INTERVAL ? second) where id = ?`;
       await conn.query(sql, [birthDate1, id]);
@@ -26,7 +26,7 @@ module.exports = {
       let [result1] = await conn.query(sql, [id]);
 
       console.log(result1, "berhasil update bio");
-      return res.status(200).send(result1);
+      return res.status(200).send(result1[0]);
     } catch (error) {
       console.log(error);
       return res.status(500).send({ message: error.message || error });
@@ -60,9 +60,10 @@ module.exports = {
       await conn.query(sql, [update, req.user.id]);
       // kalo lewat sini berarti berhasil
       console.log("berhasil update");
-
+      sql = `select profilepic from users where id = ?`;
+      let [result1] = await conn.query(sql, [req.user.id]);
       conn.release();
-      return res.status(200).send({ message: " berhasil edit profilepic" });
+      return res.status(200).send(result1[0]);
     } catch (error) {
       conn.release();
       if (imagepath) {
