@@ -17,7 +17,6 @@ const upload = require("../lib/upload");
 const uploader = upload("/products", "PRODUCT").fields([
   { name: "products", maxCount: 3 },
 ]);
-
 Router.get("/fetchdaftarproduk", fetchDaftarProduk);
 Router.get("/getcategory", getCategoryObat);
 Router.post("/addproduct", uploader, addProducts);
