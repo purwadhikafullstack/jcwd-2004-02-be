@@ -1,23 +1,27 @@
-const {createJwtAccess, createJwtEmail} = require('../lib/jwt')  
-const {loginService, registerService, forgetPasswordService} = require('../services/authService') 
-const {dbCon} = require('../connections')
-const hashPass = require ('../lib/hashpass') 
-const nodemailer = require ('nodemailer')  
-const handlebars = require ('handlebars') 
-const path = require ('path') 
+const { createJwtAccess, createJwtEmail } = require("../lib/jwt");
+const {
+  loginService,
+  registerService,
+  forgetPasswordService,
+} = require("../services/authService");
+const { dbCon } = require("../connections");
+const hashPass = require("../lib/hashpass");
+const nodemailer = require("nodemailer");
+const handlebars = require("handlebars");
+const path = require("path");
 const myCache = require("../lib/cache");
-const fs = require ('fs') 
+const fs = require("fs");
 
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  service: "gmail",
   auth: {
-      user: 'andhikapraset@gmail.com',
-      pass: 'lmcxxqqjlwzajwdi'
-  }, 
+    user: "andhikapraset@gmail.com",
+    pass: "lmcxxqqjlwzajwdi",
+  },
   tls: {
-      rejectUnauthorized: false
-  }  
-})
+    rejectUnauthorized: false,
+  },
+});
 
 module.exports = {
   login: async (req, res) => {
@@ -107,7 +111,10 @@ module.exports = {
           ? "http://namadomainfe"
           : "http://localhost:3000";
       const link = `${host}/verified/${tokenEmail}`;
-      let filePath = path.resolve(__dirname, "../templates/emailTemplate.html");
+      let filePath = path.resolve(
+        __dirname,
+        "../templates/emailTemplates.html"
+      );
       let htmlString = fs.readFileSync(filePath, "utf-8");
       console.log(htmlString);
       const template = handlebars.compile(htmlString);
