@@ -20,10 +20,10 @@ module.exports = {
       }
 
       // let dataToken = {
-      //     id: result[0].id,
-      //     username: result[0].username
-      // }
-      // let tokenAccess = createJwtAccess(dataToken)
+      //   id: result[0].id,
+      //   username: result[0].username,
+      // };
+      // let tokenAccess = createJwtAccess(dataToken);
 
       conn.release();
       return { data: result[0] };
@@ -42,10 +42,10 @@ module.exports = {
     let conn, sql;
     try {
       conn = await dbCon.promise().getConnection();
-      let regex = new RegExp(/ /g);
-      if (regex.test(name)) {
-        throw { message: "ada spasi" };
-      }
+      // let regex = new RegExp(/ /g);
+      // if (regex.test(name)) {
+      //   throw { message: "ada spasi" };
+      // }
       await conn.beginTransaction();
       sql = `select id from users where email = ?`;
       let [result] = await conn.query(sql, [email]);
