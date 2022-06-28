@@ -6,6 +6,7 @@ const {
   fetchUserProduct,
   getLastProduk,
   getCategoryObat,
+  getUserCategorySelected,
   addProducts,
   editProducts,
   deleteProducts,
@@ -27,6 +28,7 @@ Router.patch("/deleteproducts/:id", deleteProducts);
 Router.get("/component", getComponentObat);
 Router.get("/getlastproduct", getLastProduk);
 Router.get("/fetchuserproduct", fetchUserProduct);
+Router.get("/getusercategoryselected/:category_id", getUserCategorySelected);
 // Router.put("/:id", uploader, editProducts)
 // Router.put("/pic/:product_image_id", uploader, editProductsPicture);
 // Router.put("/stock/:stock_id", uploader, editProductsStock);

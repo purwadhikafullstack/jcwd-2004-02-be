@@ -14,5 +14,10 @@ Content-Type: application/json
 
 ###
 
-GET http://localhost:5000/products/fetchuserproduct HTTP/1.1
+GET http://localhost:5000/products/fetchuserproduct?symptom=2&type=2 HTTP/1.1
+Content-Type: application/json
+
+
+###
+GET http://localhost:5000/products/getusercategoryselected/1 HTTP/1.1
 Content-Type: application/json

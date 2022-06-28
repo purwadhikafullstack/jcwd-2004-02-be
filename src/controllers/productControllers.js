@@ -347,19 +347,20 @@ module.exports = {
     }
 
     if (symptom) {
-      symptom = `and symptom_product.symptom_id = ${symptom}`;
+      symptom = symptom.split(",").map((val) => parseInt(val));
+      symptom = `where symptom_id in (${dbCon.escape(symptom)})`;
     } else {
       symptom = ``;
     }
 
     if (type) {
-      type = `and product.type_id = ${type}`;
+      type = `and type_id in (${type})`;
     } else {
       type = ``;
     }
 
     if (brand) {
-      brand = `and product.brand_id = ${brand}`;
+      brand = `and brand_id in (${brand})`;
     } else {
       brand = ``;
     }
@@ -378,43 +379,62 @@ module.exports = {
 
       await conn.beginTransaction();
 
-      sql = `select product.id, name, hargaJual, unit, no_obat, no_BPOM, type_name, image, brand_name,
+      // sql = `select product.id, name, hargaJual, unit, no_obat, no_BPOM, type_name, image, brand_name,
+      // (select sum(stock) from stock where product_id = product.id) as total_stock from product
+      // inner join (select image, product_id from product_image) as img on product.id = img.product_id
+      // inner join (select name as type_name, id from type) as type on product.type_id = type.id
+      // inner join (select name as brand_name,id from brand) as brand on product.brand_id = brand.id
+      // inner join category_product on product.id = category_product.product_id
+      // inner join symptom_product on product.id = symptom_product.product_id
+      // left join (select name as symptom_name, id from symptom) as symptom on symptom_id = symptom.id
+      // left join (select name as category_name, id from category) as kategori on category_id = kategori.id
+      // where true ${search} ${category} ${symptom} ${type} ${brand} ${price}
+      // and product.is_deleted = 0 group by product.id LIMIT ${dbCon.escape(
+      //   offset
+      // )}, ${dbCon.escape(limit)}`;
+
+      sql = `select product.id, name, hargaJual, unit, no_obat, no_BPOM, type_name, brand_name, category_name, symptom_name, symptom_id,
       (select sum(stock) from stock where product_id = product.id) as total_stock from product
-      inner join (select image, product_id from product_image) as img on product.id = img.product_id
       inner join (select name as type_name, id from type) as type on product.type_id = type.id
       inner join (select name as brand_name,id from brand) as brand on product.brand_id = brand.id
       inner join category_product on product.id = category_product.product_id
-      inner join symptom_product on product.id = symptom_product.product_id
+      inner join (select symptom_id,product_id from symptom_product ${symptom}) as symptom_product on product.id = symptom_product.product_id
       left join (select name as symptom_name, id from symptom) as symptom on symptom_id = symptom.id
       left join (select name as category_name, id from category) as kategori on category_id = kategori.id
-      where true ${search} ${category} ${symptom} ${type} ${brand} ${price}
-      and product.is_deleted = 0 group by product.id LIMIT ${dbCon.escape(
+      where true ${search} ${category} ${type} ${brand} ${price} and product.is_deleted = 0 group by product.id  LIMIT ${dbCon.escape(
         offset
       )}, ${dbCon.escape(limit)}`;
+
       let [result] = await conn.query(sql);
+      // console.log(result);
+      // console.log(sql);
 
-      sql = `select id, name from category_product cp inner join category c on cp.category_id = c.id where product_id = ?`;
+      let sql_cat = `select id, name from category_product cp join category c on cp.category_id = c.id where product_id = ?`;
+      let sql_symp = `select id, name from symptom_product sp join symptom s on sp.symptom_id = s.id where product_id = ?`;
+      let sql_img = `select id, image from product_image where product_id = ?`;
 
       for (let i = 0; i < result.length; i++) {
         const element = result[i];
-        let [categories] = await conn.query(sql, element.id);
+        let [categories] = await conn.query(sql_cat, element.id);
         result[i].categories = categories;
-      }
-
-      sql = `select id, name from symptom_product sp inner join symptom s on sp.symptom_id = s.id where product_id = ?`;
-
-      for (let i = 0; i < result.length; i++) {
-        const element = result[i];
-        let [symptoms] = await conn.query(sql, element.id);
+        let [symptoms] = await conn.query(sql_symp, element.id);
         result[i].symptoms = symptoms;
+        let [images] = await conn.query(sql_img, element.id);
+        result[i].images = images;
       }
+
+      // get img beda query
 
       // count tabel product & category & stock
       sql = `select count(*) as total_data from (select product.id, name, hargaJual, hargaBeli, unit, no_obat, no_BPOM,
         (select sum(stock) from stock where product_id = product.id) as total_stock from product
+        inner join (select name as type_name, id from type) as type on product.type_id = type.id
+        inner join (select name as brand_name,id from brand) as brand on product.brand_id = brand.id
         inner join category_product on product.id = category_product.product_id
+        inner join (select symptom_id,product_id from symptom_product ${symptom}) as symptom_product on product.id = symptom_product.product_id
+        left join (select name as symptom_name, id from symptom) as symptom on symptom_id = symptom.id
         left join (select name as category_name, id from category) as kategori on category_id = kategori.id
-        where true ${search} ${category} ${symptom} ${type} ${brand} ${price} and product.is_deleted = 0 group by product.id) as table_data`;
+        where true ${search} ${category} ${type} ${brand} ${price} and product.is_deleted = 0 group by product.id) as table_data`;
 
       let [totalData] = await conn.query(sql);
 
@@ -428,6 +448,21 @@ module.exports = {
       conn.rollback();
       conn.release();
       // console.log(error);
+      return res.status(500).send({ message: error.message || error });
+    }
+  },
+  getUserCategorySelected: async (req, res) => {
+    let { category_id } = req.params;
+    let conn, sql;
+    try {
+      conn = await dbCon.promise().getConnection();
+      sql = `select id, name from category where id = ?`;
+      let [category] = await conn.query(sql, category_id);
+
+      await conn.commit();
+      return res.status(200).send(category);
+    } catch (error) {
+      console.log(error);
       return res.status(500).send({ message: error.message || error });
     }
   },
