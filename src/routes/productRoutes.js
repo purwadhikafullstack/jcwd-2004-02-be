@@ -22,8 +22,8 @@ Router.get("/getcategory", getCategoryObat);
 Router.post("/addproduct", uploader, addProducts);
 Router.patch("/deleteproducts/:id", deleteProducts);
 Router.get("/component", getComponentObat);
-// Router.put("/:id", uploader, editProducts);
-// Router.put("/pic/:product_image_id", uploader, editProductsPicture);
+Router.put("/:id", uploader, editProducts);
+Router.put("/pic/:id", uploader, editProductsPicture);
 // Router.put("/stock/:stock_id", uploader, editProductsStock);
 
 module.exports = Router;

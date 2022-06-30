@@ -1,5 +1,8 @@
 const { dbCon } = require("../connections");
 const fs = require("fs");
+// const { nanoid } = require("nanoid");
+const { customAlphabet } = require("nanoid");
+const nanoid = customAlphabet("1234567890abcdef", 10);
 
 module.exports = {
   // insert table transaction (status)
@@ -31,13 +34,23 @@ module.exports = {
       //   throw { message: "user tidak ditemukan" };
       // }
 
+      sql =
+        " SELECT transaction.user_id, transaction.id, transaction.status, transaction.recipient, transaction.transaction_number, transaction.address, address.address, address.firstname  FROM transaction LEFT JOIN address ON transaction.user_id = address.user_id";
+      let [resultjoin] = await conn.query(sql, [id]);
+      // masuk sini kalo gaada usernya
+      // console.log(resultjoin);
+      sql = "select * from address where user_id =?";
+      let [result] = await conn.query(sql, [id]);
+      // masuk sini kalo gaada usernya
+
       // insert data to transaction table biar bisa isi prescription
       sql = `insert into transaction set ?`;
+      console.log(result[0].address, "ini result");
       let insertData = {
         status: 1,
-        recipient: "me",
-        transaction_number: "12345",
-        address: "kutilang 1",
+        recipient: result[0].firstname,
+        transaction_number: nanoid(),
+        address: result[0].address,
         user_id: id,
       };
 
@@ -51,8 +64,7 @@ module.exports = {
       let insertDataImage = {
         image: imagepath,
         transaction_id: transId,
-        prescription_number: 1,
-        quantity: 10,
+        prescription_number: nanoid(),
         status: 1,
         user_id: id,
       };
