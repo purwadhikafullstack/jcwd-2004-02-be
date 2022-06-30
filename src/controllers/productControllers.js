@@ -1,80 +1,30 @@
 const { dbCon } = require("../connections");
 const db = require("../connections/mysqldb");
 const { json } = require("body-parser");
+const { getDaftarProductService } = require("../services/productService");
 
 module.exports = {
-  fetchDaftarProduk: async (req, res) => {
-    let conn, sql;
-    let { search, page, limit, category } = req.query;
-
-    if (category) {
-      category = `and category_product.category_id = ${category}`;
-    } else {
-      category = ``;
-    }
-
-    if (!page) {
-      page = 0;
-    }
-
-    if (!limit) {
-      limit = 10;
-    }
-
-    if (search) {
-      search = `and product.name like '%${search}%'`;
-    } else {
-      search = ``;
-    }
-
-    let offset = page * parseInt(limit);
+  getDaftarProductController: async (req, res) => {
+    let { search, page, limit, category, order_name, order_price } = req.query;
 
     try {
-      conn = await dbCon.promise().getConnection();
+      const result = await getDaftarProductService(
+        search,
+        page,
+        limit,
+        category,
+        order_name,
+        order_price
+      );
 
-      await conn.beginTransaction();
-
-      // get tabel product & category & stock
-      sql = `select product.id, name, hargaJual, hargaBeli, unit, no_obat, no_BPOM,
-      (select sum(stock) from stock where product_id = product.id) as total_stock from product
-      inner join category_product on product.id = category_product.product_id
-      left join (select name as category_name, id from category) as kategori on category_id = kategori.id
-      where true ${search} ${category} and product.is_deleted = 0 group by product.id LIMIT ${dbCon.escape(
-        offset
-      )}, ${dbCon.escape(limit)}`;
-      let [result] = await conn.query(sql);
-
-      sql = `select id, name from category_product cp inner join category c on cp.category_id = c.id where product_id = ?`;
-
-      for (let i = 0; i < result.length; i++) {
-        const element = result[i];
-        let [categories] = await conn.query(sql, element.id);
-        result[i].categories = categories;
-      }
-
-      // count tabel product & category & stock
-      sql = `select count(*) as total_data from (select product.id, name, hargaJual, hargaBeli, unit, no_obat, no_BPOM,
-        (select sum(stock) from stock where product_id = product.id) as total_stock from product
-        inner join category_product on product.id = category_product.product_id
-        left join (select name as category_name, id from category) as kategori on category_id = kategori.id
-        where true ${search} ${category} group by product.id) as table_data`;
-
-      let [totalData] = await conn.query(sql);
-
-      await conn.commit();
-      conn.release();
-      // console.log(result);
-      res.set("x-total-product", totalData[0].total_data);
-      // console.log(totalData[0].total_data);
-      return res.status(200).send(result);
+      res.set("x-total-product", result.totalData[0].total_data);
+      return res.status(200).send(result.data);
     } catch (error) {
-      conn.rollback();
-      conn.release();
-      // console.log(error);
       return res.status(500).send({ message: error.message || error });
     }
   },
-  getLastProduk: async (req, res) => {
+
+  getLastProduct: async (req, res) => {
     let conn, sql;
     try {
       conn = await dbCon.promise().getConnection();
@@ -100,7 +50,7 @@ module.exports = {
       sql = `select count(*) as total_data from product`;
       let [totalData] = await conn.query(sql);
 
-      await conn.commit();
+      conn.commit();
       conn.release();
       res.set("x-total-product", totalData[0].total_data);
       return res.status(200).send(result);
@@ -126,6 +76,7 @@ module.exports = {
       return res.status(500).send({ message: error.message || error });
     }
   },
+
   getComponentObat: async (req, res) => {
     let conn, sql;
     try {
@@ -312,7 +263,7 @@ module.exports = {
       return res.status(500).send({ message: error.message || error });
     }
   },
-  fetchUserProduct: async (req, res) => {
+  getUserProduct: async (req, res) => {
     let conn, sql;
     let {
       search,
@@ -379,20 +330,6 @@ module.exports = {
 
       await conn.beginTransaction();
 
-      // sql = `select product.id, name, hargaJual, unit, no_obat, no_BPOM, type_name, image, brand_name,
-      // (select sum(stock) from stock where product_id = product.id) as total_stock from product
-      // inner join (select image, product_id from product_image) as img on product.id = img.product_id
-      // inner join (select name as type_name, id from type) as type on product.type_id = type.id
-      // inner join (select name as brand_name,id from brand) as brand on product.brand_id = brand.id
-      // inner join category_product on product.id = category_product.product_id
-      // inner join symptom_product on product.id = symptom_product.product_id
-      // left join (select name as symptom_name, id from symptom) as symptom on symptom_id = symptom.id
-      // left join (select name as category_name, id from category) as kategori on category_id = kategori.id
-      // where true ${search} ${category} ${symptom} ${type} ${brand} ${price}
-      // and product.is_deleted = 0 group by product.id LIMIT ${dbCon.escape(
-      //   offset
-      // )}, ${dbCon.escape(limit)}`;
-
       sql = `select product.id, name, hargaJual, unit, no_obat, no_BPOM, type_name, brand_name, category_name, symptom_name, symptom_id,
       (select sum(stock) from stock where product_id = product.id) as total_stock from product
       inner join (select name as type_name, id from type) as type on product.type_id = type.id
@@ -406,8 +343,6 @@ module.exports = {
       )}, ${dbCon.escape(limit)}`;
 
       let [result] = await conn.query(sql);
-      // console.log(result);
-      // console.log(sql);
 
       let sql_cat = `select id, name from category_product cp join category c on cp.category_id = c.id where product_id = ?`;
       let sql_symp = `select id, name from symptom_product sp join symptom s on sp.symptom_id = s.id where product_id = ?`;

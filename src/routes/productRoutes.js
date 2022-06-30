@@ -2,9 +2,9 @@ const express = require("express");
 const Router = express.Router();
 
 const {
-  fetchDaftarProduk,
-  fetchUserProduct,
-  getLastProduk,
+  getDaftarProductController,
+  getUserProduct,
+  getLastProduct,
   getCategoryObat,
   getUserCategorySelected,
   addProducts,
@@ -21,13 +21,13 @@ const uploader = upload("/products", "PRODUCT").fields([
   { name: "products", maxCount: 3 },
 ]);
 
-Router.get("/fetchdaftarproduk", fetchDaftarProduk);
+Router.get("/fetchdaftarproduk", getDaftarProductController);
 Router.get("/getcategory", getCategoryObat);
 Router.post("/addproduct", uploader, addProducts);
 Router.patch("/deleteproducts/:id", deleteProducts);
 Router.get("/component", getComponentObat);
-Router.get("/getlastproduct", getLastProduk);
-Router.get("/fetchuserproduct", fetchUserProduct);
+Router.get("/getlastproduct", getLastProduct);
+Router.get("/fetchuserproduct", getUserProduct);
 Router.get("/getusercategoryselected/:category_id", getUserCategorySelected);
 // Router.put("/:id", uploader, editProducts)
 // Router.put("/pic/:product_image_id", uploader, editProductsPicture);
