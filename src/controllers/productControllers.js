@@ -132,7 +132,7 @@ module.exports = {
       return res.status(500).send({ message: "Foto tidak ada" });
     }
 
-    console.log(products);
+    // console.log(products);
     console.log(imagePaths);
 
     let conn, sql;
