@@ -11,6 +11,7 @@ const {
   editProductsStock,
   deleteProductsStock,
   getComponentObat,
+  getSelectedProduct,
 } = require("./../controllers/productControllers");
 const upload = require("../lib/upload");
 
@@ -24,6 +25,7 @@ Router.patch("/deleteproducts/:id", deleteProducts);
 Router.get("/component", getComponentObat);
 Router.put("/:id", uploader, editProducts);
 Router.put("/pic/:id", uploader, editProductsPicture);
+Router.get("/getselectedproduct/:id", getSelectedProduct);
 // Router.put("/stock/:stock_id", uploader, editProductsStock);
 
 module.exports = Router;

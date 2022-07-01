@@ -460,4 +460,29 @@ module.exports = {
   //       console.log(error);
   //       return res.status(500).send({ message: error.message || error });
   //     }
+  getSelectedProduct: async (req, res) => {
+    let { id } = req.params;
+    let conn, sql;
+    try {
+      conn = await dbCon.promise().getConnection();
+      sql = `select id, name, no_obat, no_BPOM, brand_id, type_id, description, warning, product.usage from product where id = ?`;
+      let [product] = await conn.query(sql, id);
+
+      sql = `select id, name from category_product cp inner join category c on cp.category_id = c.id where product_id = ?`;
+
+      let [categories] = await conn.query(sql, id);
+      // product.categories = categories;
+      product[0].categories = categories;
+      sql = `select id, name from symptom_product sp inner join symptom s on sp.symptom_id = s.id where product_id = ?`;
+
+      let [symptoms] = await conn.query(sql, id);
+      product[0].symptoms = symptoms;
+
+      await conn.commit();
+      return res.status(200).send(product[0]);
+    } catch (error) {
+      console.log(error);
+      return res.status(500).send({ message: error.message || error });
+    }
+  },
 };
