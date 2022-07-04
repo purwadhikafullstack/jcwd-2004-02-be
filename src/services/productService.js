@@ -3,14 +3,7 @@ const fs = require("fs");
 
 module.exports = {
   // getDaftarProduct
-  getDaftarProductService: async (
-    search,
-    page,
-    limit,
-    category,
-    order_name,
-    order_price
-  ) => {
+  getDaftarProductService: async (search, page, limit, category, order) => {
     let conn, sql;
 
     if (category) {
@@ -33,15 +26,12 @@ module.exports = {
       search = ``;
     }
 
-    let order;
-    if (!order_name && !order_price) {
+    if (order == "name") {
+      order = `order by product.name ASC`;
+    } else if (order == "price") {
+      order = `order by product.hargaJual ASC`;
+    } else {
       order = `order by product.id ASC`;
-    } else if (order_name && !order_price) {
-      order = `order by product.name ${order_name}`;
-    } else if (!order_name && order_price) {
-      order = `order by product.hargaJual ${order_price}`;
-    } else if (order_name && order_price) {
-      order = `order by product.name ${order_name}, product.hargaJual ${order_price}`;
     }
 
     let offset = page * parseInt(limit);
@@ -84,6 +74,26 @@ module.exports = {
       throw new Error(error.message || error);
     } finally {
       conn.release();
+    }
+  },
+  getDetailProductService: async (product_id) => {
+    let conn, sql;
+
+    try {
+      conn = dbCon.promise();
+
+      sql = `select product.id, name, hargaJual, description, product.usage, warning, brand_name, unit, brand_id,
+      (select sum(stock) from stock where product_id = product.id) as total_stock from product
+      join (select id, name as brand_name from brand) as b on b.id = brand_id where product.id = ?`;
+      let [data] = await conn.query(sql, product_id);
+
+      sql = `select id, image from product_image where product_id = ?`;
+      let [images] = await conn.query(sql, product_id);
+      data[0].images = images;
+
+      return { data };
+    } catch (error) {
+      throw new Error(error.message || error);
     }
   },
   // getUserProduct

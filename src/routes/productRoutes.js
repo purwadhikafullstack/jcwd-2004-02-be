@@ -14,6 +14,7 @@ const {
   editProductsStock,
   deleteProductsStock,
   getComponentObat,
+  getDetailProductController,
 } = require("./../controllers/productControllers");
 const upload = require("../lib/upload");
 
@@ -29,6 +30,7 @@ Router.get("/component", getComponentObat);
 Router.get("/getlastproduct", getLastProduct);
 Router.get("/fetchuserproduct", getUserProduct);
 Router.get("/getusercategoryselected/:category_id", getUserCategorySelected);
+Router.get("/getdetailproduct/:product_id", getDetailProductController);
 // Router.put("/:id", uploader, editProducts)
 // Router.put("/pic/:product_image_id", uploader, editProductsPicture);
 // Router.put("/stock/:stock_id", uploader, editProductsStock);

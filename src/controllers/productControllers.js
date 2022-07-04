@@ -1,11 +1,14 @@
 const { dbCon } = require("../connections");
 const db = require("../connections/mysqldb");
 const { json } = require("body-parser");
-const { getDaftarProductService } = require("../services/productService");
+const {
+  getDaftarProductService,
+  getDetailProductService,
+} = require("../services/productService");
 
 module.exports = {
   getDaftarProductController: async (req, res) => {
-    let { search, page, limit, category, order_name, order_price } = req.query;
+    let { search, page, limit, category, order } = req.query;
 
     try {
       const result = await getDaftarProductService(
@@ -13,8 +16,7 @@ module.exports = {
         page,
         limit,
         category,
-        order_name,
-        order_price
+        order
       );
 
       res.set("x-total-product", result.totalData[0].total_data);
@@ -275,6 +277,7 @@ module.exports = {
       min_price,
       max_price,
       brand,
+      order,
     } = req.query;
 
     if (!page) {
@@ -323,6 +326,14 @@ module.exports = {
       price = ``;
     }
 
+    if (order == "name") {
+      order = `order by product.name ASC`;
+    } else if (order == "price") {
+      order = `order by product.hargaJual ASC`;
+    } else {
+      order = `order by product.id ASC`;
+    }
+
     let offset = page * parseInt(limit);
 
     try {
@@ -338,7 +349,7 @@ module.exports = {
       inner join (select symptom_id,product_id from symptom_product ${symptom}) as symptom_product on product.id = symptom_product.product_id
       left join (select name as symptom_name, id from symptom) as symptom on symptom_id = symptom.id
       left join (select name as category_name, id from category) as kategori on category_id = kategori.id
-      where true ${search} ${category} ${type} ${brand} ${price} and product.is_deleted = 0 group by product.id  LIMIT ${dbCon.escape(
+      where true ${search} ${category} ${type} ${brand} ${price} and product.is_deleted = 0 group by product.id ${order} LIMIT ${dbCon.escape(
         offset
       )}, ${dbCon.escape(limit)}`;
 
@@ -398,6 +409,15 @@ module.exports = {
       return res.status(200).send(category);
     } catch (error) {
       console.log(error);
+      return res.status(500).send({ message: error.message || error });
+    }
+  },
+  getDetailProductController: async (req, res) => {
+    let { product_id } = req.params;
+    try {
+      const result = await getDetailProductService(product_id);
+      return res.status(200).send(result.data);
+    } catch (error) {
       return res.status(500).send({ message: error.message || error });
     }
   },
