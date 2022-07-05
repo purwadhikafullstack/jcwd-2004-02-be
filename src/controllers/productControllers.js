@@ -4,6 +4,8 @@ const { json } = require("body-parser");
 const {
   getDaftarProductService,
   getDetailProductService,
+  addToCartService,
+  getProdukTerkaitService,
 } = require("../services/productService");
 
 module.exports = {
@@ -135,13 +137,11 @@ module.exports = {
         description: JSON.stringify(data.description),
         warning: JSON.stringify(data.warning),
         usage: JSON.stringify(data.usage),
-        quantity: data.quantity,
         unit: data.unit,
         no_BPOM: data.no_BPOM,
         hargaJual: data.hargaJual,
         hargaBeli: data.hargaBeli,
         no_obat: data.no_obat,
-
         brand_id: data.brand_id,
         type_id: data.type_id,
       };
@@ -369,8 +369,6 @@ module.exports = {
         result[i].images = images;
       }
 
-      // get img beda query
-
       // count tabel product & category & stock
       sql = `select count(*) as total_data from (select product.id, name, hargaJual, hargaBeli, unit, no_obat, no_BPOM,
         (select sum(stock) from stock where product_id = product.id) as total_stock from product
@@ -416,6 +414,29 @@ module.exports = {
     let { product_id } = req.params;
     try {
       const result = await getDetailProductService(product_id);
+      return res.status(200).send(result.data);
+    } catch (error) {
+      return res.status(500).send({ message: error.message || error });
+    }
+  },
+  addToCartController: async (req, res) => {
+    const { id } = req.user;
+    const { product_id, quantity } = req.body;
+    try {
+      let result = await addToCartService(id, product_id, quantity);
+
+      return res
+        .status(200)
+        .send({ result, message: "Produk berhasil ditambahkan ke cart" });
+    } catch (error) {
+      return res.status(500).send({ message: error.message || error });
+    }
+  },
+  getProdukTerkaitController: async (req, res) => {
+    let { brand } = req.query;
+
+    try {
+      const result = await getProdukTerkaitService(brand);
       return res.status(200).send(result.data);
     } catch (error) {
       return res.status(500).send({ message: error.message || error });
