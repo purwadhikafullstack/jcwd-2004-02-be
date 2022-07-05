@@ -12,7 +12,9 @@ const {
   forgotPassword,
   resetPassword,
 } = authControllers;
-const { verifyLastToken } = require("../lib/verifyLastToken");
+const { verifyLastToken } = require("../lib/verifyLastToken"); 
+const {checkRole} = require ('../controllers/authControllers')
+
 
 Router.post("/login", login);
 Router.get("/keepLogin", verifyTokenAccess, keeplogin);
@@ -21,6 +23,8 @@ Router.post("/register", register);
 Router.get("/verified", verifyTokenEmail, verifyLastToken, accountVerified);
 Router.post("/sendemail-verified", sendEmailVerified);
 Router.post("/forgotPassword", forgotPassword);
-Router.put("/resetPassword", verifyTokenEmail, resetPassword);
+Router.put("/resetPassword", verifyTokenEmail, resetPassword); 
+Router.get('/checkRole',verifyTokenAccess, checkRole)
+
 
 module.exports = Router;
