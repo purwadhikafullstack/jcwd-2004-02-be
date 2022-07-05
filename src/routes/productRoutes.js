@@ -15,6 +15,7 @@ const {
   deleteProductsStock,
   getComponentObat,
   getSelectedProduct,
+  getSelectedProductPicture,
 } = require("./../controllers/productControllers");
 const upload = require("../lib/upload");
 
@@ -29,9 +30,11 @@ Router.get("/component", getComponentObat);
 Router.put("/:id", uploader, editProducts);
 Router.put("/pic/:id", uploader, editProductsPicture);
 Router.get("/getselectedproduct/:id", getSelectedProduct);
+Router.get("/getselectedproductpicture/:id", getSelectedProductPicture);
 Router.get("/getlastproduct", getLastProduk);
 Router.get("/fetchuserproduct", fetchUserProduct);
 Router.get("/getusercategoryselected/:category_id", getUserCategorySelected);
+
 // Router.put("/:id", uploader, editProducts)
 // Router.put("/pic/:product_image_id", uploader, editProductsPicture);
 // Router.put("/stock/:stock_id", uploader, editProductsStock);
