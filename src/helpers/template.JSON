@@ -30,15 +30,15 @@
 
 // EDIT
 {
-  {"name": "betadin",
+  {"name": "abuyy",
     "no_obat": 51515151,
     "no_BPOM": 21212121,
-    "category": [2,3],
+    "category": [3],
     "brand_id": 1,
     "type_id": 1,
     "symptom": [1,2],
     "description":{"Kemasan":"Strip"},
-    "warning":"awas",
+    "warning":"awass",
     "usage":"ditegak"}
 
   INSERT INTO `finalproject_ecommerce_2`.`symptom` (`name`) VALUES ('Batuk & Flu');
