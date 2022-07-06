@@ -26,13 +26,13 @@ const transporter = nodemailer.createTransport({
 module.exports = {
   login: async (req, res) => {
     try {
-      const {data: userData} = await loginService(req.body);
-      console.log('ini data', userData)
+      const { data: userData } = await loginService(req.body);
+      console.log("ini data", userData);
 
       const dataToken = {
         id: userData.id,
-        name: userData.name, 
-        role_id: userData.role_id
+        name: userData.name,
+        role_id: userData.role_id,
       };
       const tokenAccess = createJwtAccess(dataToken);
       res.set("x-token-access", tokenAccess);
@@ -42,7 +42,7 @@ module.exports = {
       return res.status(500).send({ message: error.message || error });
     }
   },
-  
+
   keeplogin: async (req, res) => {
     const { id } = req.user;
     let conn, sql;
@@ -271,13 +271,13 @@ module.exports = {
       console.log(error);
       return res.status(500).send({ message: error.message || error });
     }
-  }, 
-  checkRole: async (req,res) => { 
-    try { 
-        return res.status(200).send(req.user)
+  },
+  checkRole: async (req, res) => {
+    try {
+      return res.status(200).send(req.user);
     } catch (error) {
-        console.log(error) 
-        return res.status(500).send({message: error.message || error})
+      console.log(error);
+      return res.status(500).send({ message: error.message || error });
     }
-  }
+  },
 };
