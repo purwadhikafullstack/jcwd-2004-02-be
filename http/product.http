@@ -1,5 +1,10 @@
-GET http://localhost:5000/adminproduk/fetchdaftarproduk?page=0 HTTP/1.1
+GET http://localhost:5000/products/fetchdaftarproduk?page=0 HTTP/1.1
 Content-Type: application/json
+
+###
+GET http://localhost:5000/products/getcategory HTTP/1.1
+Content-Type: application/json
+
 
 ###
 
@@ -14,10 +19,20 @@ Content-Type: application/json
 
 ###
 
-GET http://localhost:5000/products/fetchuserproduct?symptom=2&type=2 HTTP/1.1
+GET http://localhost:5000/products/fetchuserproduct?category=1&order=price HTTP/1.1
 Content-Type: application/json
 
 
 ###
 GET http://localhost:5000/products/getusercategoryselected/1 HTTP/1.1
+Content-Type: application/json
+
+
+###
+GET http://localhost:5000/products/getdetailproduct/1 HTTP/1.1
+Content-Type: application/json
+
+
+###
+GET http://localhost:5000/products/getprodukterkait?brand=miracloven HTTP/1.1
 Content-Type: application/json
