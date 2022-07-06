@@ -13,6 +13,7 @@ const {
   editProductsPicture,
   editProductsStock,
   deleteProductsStock,
+  deleteProductsPicture,
   getComponentObat,
   getSelectedProduct,
   getSelectedProductPicture,
@@ -28,11 +29,12 @@ Router.post("/addproduct", uploader, addProducts);
 Router.patch("/deleteproducts/:id", deleteProducts);
 Router.get("/component", getComponentObat);
 Router.put("/:id", uploader, editProducts);
-Router.put("/pic/:id", uploader, editProductsPicture);
+Router.post("/pic", uploader, editProductsPicture);
+Router.delete("/pic/:id", deleteProductsPicture);
 Router.get("/getselectedproduct/:id", getSelectedProduct);
 Router.get("/getselectedproductpicture/:id", getSelectedProductPicture);
 Router.get("/getlastproduct", getLastProduk);
-Router.get("/fetchuserproduct", fetchUserProduct);
+Router.get("/fetchuserproduct ", fetchUserProduct);
 Router.get("/getusercategoryselected/:category_id", getUserCategorySelected);
 
 // Router.put("/:id", uploader, editProducts)
