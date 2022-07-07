@@ -115,6 +115,7 @@ module.exports = {
         __dirname,
         "../templates/emailTemplate.html"
       );
+
       let htmlString = fs.readFileSync(filePath, "utf-8");
       console.log(htmlString);
       const template = handlebars.compile(htmlString);
