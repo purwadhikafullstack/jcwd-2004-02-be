@@ -16,6 +16,6 @@ Router.get('/getProvinces', getProvinces)
 Router.post('/addAddress',verifyTokenAccess, addAddress)  
 Router.get('/getAddress', verifyTokenAccess, getAddress) 
 Router.get('/getAllAddress', verifyTokenAccess, getAllAddress)
-Router.put('/defaultAddress/:address_id', verifyTokenAccess, defaultAddress)
+Router.put('/defaultAddress/', verifyTokenAccess, defaultAddress)
 
 module.exports = Router

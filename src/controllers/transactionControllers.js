@@ -270,19 +270,6 @@ module.exports = {
             return res.status(500).send({message: error.message || error})
         }
     }, 
-    defaultAddress: async (req,res) => {
-        const {id} = req.user 
-        let {address_id} = req.params 
-        let conn,sql 
-
-        try {
-            conn = await dbCon.promise().getConnection() 
-
-            sql = `select id from address where user_id =?`
-        } catch (error) {
-            
-        }
-    }, 
     getAddress: async(req,res) => {
         const {id} = req.user 
         let conn,sql 
@@ -347,7 +334,7 @@ module.exports = {
         }
     }, defaultAddress: async (req,res) => {
         const {id} = req.user 
-        let {address_id} = req.params 
+        let {address_id} = req.query 
         console.log(address_id);  
         let conn,sql 
 
@@ -357,13 +344,13 @@ module.exports = {
             sql = `select id from address where user_id=? and is_default='yes'` 
             let [result1] = await conn.query(sql,id)
 
-            sql = `update address set? where id=?`
+            sql = `update address set? where id=? and is_default='yes'`
             let updateNo = {
                 is_default: 'no'
             } 
             await conn.query(sql,[updateNo, result1[0].id]) 
 
-            sql = `update address set? where id=?` 
+            sql = `update address set? where id=? and is_default='no'` 
             let updateYes = {
                 is_default: 'yes'
             } 
@@ -373,7 +360,7 @@ module.exports = {
             let [result2] = await conn.query(sql, id) 
 
             conn.release()
-            return res.status(200).send(result2)
+            return res.status(200).send({result2})
         } catch (error) {
             console.log(error);
             return res.status(500).send({message : error.message || error})
