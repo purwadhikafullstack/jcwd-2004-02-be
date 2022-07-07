@@ -1,33 +1,38 @@
-const {createJwtAccess, createJwtEmail} = require('../lib/jwt')  
-const {loginService, registerService, forgetPasswordService} = require('../services/authService') 
-const {dbCon} = require('../connections')
-const hashPass = require ('../lib/hashpass') 
-const nodemailer = require ('nodemailer')  
-const handlebars = require ('handlebars') 
-const path = require ('path') 
+const { createJwtAccess, createJwtEmail } = require("../lib/jwt");
+const {
+  loginService,
+  registerService,
+  forgetPasswordService,
+} = require("../services/authService");
+const { dbCon } = require("../connections");
+const hashPass = require("../lib/hashpass");
+const nodemailer = require("nodemailer");
+const handlebars = require("handlebars");
+const path = require("path");
 const myCache = require("../lib/cache");
-const fs = require ('fs') 
+const fs = require("fs");
 
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  service: "gmail",
   auth: {
-      user: 'andhikapraset@gmail.com',
-      pass: 'lmcxxqqjlwzajwdi'
-  }, 
+    user: "andhikapraset@gmail.com",
+    pass: "lmcxxqqjlwzajwdi",
+  },
   tls: {
-      rejectUnauthorized: false
-  }  
-})
+    rejectUnauthorized: false,
+  },
+});
 
 module.exports = {
   login: async (req, res) => {
     try {
-      const {data: userData} = await loginService(req.body);
-      console.log('ini data', userData)
+      const { data: userData } = await loginService(req.body);
+      console.log("ini data", userData);
 
       const dataToken = {
         id: userData.id,
         name: userData.name,
+        role_id: userData.role_id,
       };
       const tokenAccess = createJwtAccess(dataToken);
       res.set("x-token-access", tokenAccess);
@@ -37,7 +42,7 @@ module.exports = {
       return res.status(500).send({ message: error.message || error });
     }
   },
-  
+
   keeplogin: async (req, res) => {
     const { id } = req.user;
     let conn, sql;
@@ -106,7 +111,10 @@ module.exports = {
           ? "http://namadomainfe"
           : "http://localhost:3000";
       const link = `${host}/verified/${tokenEmail}`;
-      let filePath = path.resolve(__dirname, "../templates/emailTemplate.html");
+      let filePath = path.resolve(
+        __dirname,
+        "../templates/emailTemplates.html"
+      );
       let htmlString = fs.readFileSync(filePath, "utf-8");
       console.log(htmlString);
       const template = handlebars.compile(htmlString);
@@ -259,6 +267,14 @@ module.exports = {
       });
       console.log(transporter.sendMail);
       return res.status(200).send(userData);
+    } catch (error) {
+      console.log(error);
+      return res.status(500).send({ message: error.message || error });
+    }
+  },
+  checkRole: async (req, res) => {
+    try {
+      return res.status(200).send(req.user);
     } catch (error) {
       console.log(error);
       return res.status(500).send({ message: error.message || error });

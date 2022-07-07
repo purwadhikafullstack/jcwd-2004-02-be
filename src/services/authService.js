@@ -5,7 +5,7 @@ const hashPass = require("../lib/hashpass");
 
 module.exports = {
   loginService: async (data) => {
-    let {email, password } = data;
+    let { email, password } = data;
     let conn, sql;
 
     try {
@@ -13,17 +13,17 @@ module.exports = {
       password = hashPass(password);
 
       sql = `select * from users where email=? and password=?`;
-      let [result] = await conn.query(sql,[email, password]);
-      console.log('ini result',result);
+      let [result] = await conn.query(sql, [email, password]);
+      console.log("ini result", result);
       if (!result.length) {
         throw { message: "users not found" };
       }
 
       // let dataToken = {
-      //     id: result[0].id,
-      //     username: result[0].username
-      // }
-      // let tokenAccess = createJwtAccess(dataToken)
+      //   id: result[0].id,
+      //   username: result[0].username,
+      // };
+      // let tokenAccess = createJwtAccess(dataToken);
 
       conn.release();
       return { data: result[0] };
@@ -35,17 +35,17 @@ module.exports = {
       console.log(error);
       throw new Error(error.message || error);
     }
-  }, 
- 
+  },
+
   registerService: async (data) => {
     let { name, email, password } = data;
     let conn, sql;
     try {
       conn = await dbCon.promise().getConnection();
-      let regex = new RegExp(/ /g);
-      if (regex.test(name)) {
-        throw { message: "ada spasi" };
-      }
+      // let regex = new RegExp(/ /g);
+      // if (regex.test(name)) {
+      //   throw { message: "ada spasi" };
+      // }
       await conn.beginTransaction();
       sql = `select id from users where email = ?`;
       let [result] = await conn.query(sql, [email]);
