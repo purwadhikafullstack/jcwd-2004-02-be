@@ -113,7 +113,7 @@ module.exports = {
       const link = `${host}/verified/${tokenEmail}`;
       let filePath = path.resolve(
         __dirname,
-        "../templates/emailTemplates.html"
+        "../templates/emailTemplate.html"
       );
       let htmlString = fs.readFileSync(filePath, "utf-8");
       console.log(htmlString);
