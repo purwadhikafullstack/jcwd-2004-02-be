@@ -396,7 +396,7 @@ module.exports = {
       inner join (select symptom_id,product_id from symptom_product ${symptom}) as symptom_product on product.id = symptom_product.product_id
       left join (select name as symptom_name, id from symptom) as symptom on symptom_id = symptom.id
       left join (select name as category_name, id from category) as kategori on category_id = kategori.id
-      where true ${search} ${category} ${type} ${brand} ${price} and product.is_deleted = 0 group by product.id ${order} LIMIT ${dbCon.escape(
+      where true ${search} ${category} ${type} ${brand} ${price} and product.is_deleted = 'no' group by product.id ${order} LIMIT ${dbCon.escape(
         offset
       )}, ${dbCon.escape(limit)}`;
 
@@ -425,7 +425,7 @@ module.exports = {
         inner join (select symptom_id,product_id from symptom_product ${symptom}) as symptom_product on product.id = symptom_product.product_id
         left join (select name as symptom_name, id from symptom) as symptom on symptom_id = symptom.id
         left join (select name as category_name, id from category) as kategori on category_id = kategori.id
-        where true ${search} ${category} ${type} ${brand} ${price} and product.is_deleted = 0 group by product.id) as table_data`;
+        where true ${search} ${category} ${type} ${brand} ${price} and product.is_deleted = 'no' group by product.id) as table_data`;
 
       let [totalData] = await conn.query(sql);
 
@@ -537,7 +537,7 @@ module.exports = {
 
       // get ID
 
-      sql = `update product set is_deleted = 1 where id = ?`;
+      sql = `update product set is_deleted = 'yes' where id = ?`;
       await conn.query(sql, id);
 
       conn.release();

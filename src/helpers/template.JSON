@@ -20,7 +20,7 @@
   "hargaJual": 50000,
   "hargaBeli": 45000,
   "no_obat": 123456,
-  "is_deleted": 0,
+  "is_deleted": "no",
   "symptom": [1, 2],
   "category": [1, 2],
   "stock": 10,

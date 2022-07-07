@@ -111,10 +111,7 @@ module.exports = {
           ? "http://namadomainfe"
           : "http://localhost:3000";
       const link = `${host}/verified/${tokenEmail}`;
-      let filePath = path.resolve(
-        __dirname,
-        "../templates/emailTemplates.html"
-      );
+      let filePath = path.resolve(__dirname, "../templates/emailTemplate.html");
       let htmlString = fs.readFileSync(filePath, "utf-8");
       console.log(htmlString);
       const template = handlebars.compile(htmlString);
