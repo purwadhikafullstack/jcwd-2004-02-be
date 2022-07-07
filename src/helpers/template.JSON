@@ -20,7 +20,7 @@
   "hargaJual": 50000,
   "hargaBeli": 45000,
   "no_obat": 123456,
-  "is_deleted": 0,
+  "is_deleted": 'no',
   "symptom": [1, 2],
   "category": [1, 2],
   "stock": 10,
@@ -30,28 +30,16 @@
 
 // EDIT
 {
-  "name": "amoxan",
-  "price": 50000,
-
-  "description": {
-    "indikasi/kegunaan": "Untuk mengobati batu berdahak, batuk karena flu, batuk karena asma, bronkitis akut atau kronis"
-  },
-  "warning": {
-    "indikasi/kegunaan": "Untuk mengobati batu berdahak, batuk karena flu, batuk karena asma, bronkitis akut atau kronis"
-  },
-  "usage": {
-    "indikasi/kegunaan": "Untuk mengobati batu berdahak, batuk karena flu, batuk karena asma, bronkitis akut atau kronis"
-  },
-  "quantity": 100,
-  "unit": "cair",
-  "expired_at": "2022-06-14 14:55:57",
-  "brand_id": 1,
-  "type_id": 1,
-  "no_BPOM": 696969,
-  "hargaJual": 50000,
-  "hargaBeli": 45000,
-  "no_obat": 123456,
-  "is_deleted": 0,
+  {"name": "abuyy",
+    "no_obat": 51515151,
+    "no_BPOM": 21212121,
+    "category": [3],
+    "brand_id": 1,
+    "type_id": 1,
+    "symptom": [1,2],
+    "description":{"Kemasan":"Strip"},
+    "warning":"awass",
+    "usage":"ditegak"}
 
   INSERT INTO `finalproject_ecommerce_2`.`symptom` (`name`) VALUES ('Batuk & Flu');
   INSERT INTO `finalproject_ecommerce_2`.`symptom` (`name`) VALUES ('Demam');
