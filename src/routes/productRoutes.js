@@ -11,6 +11,7 @@ const {
   editProducts,
   deleteProducts,
   editProductsPicture,
+  getSelectedProductStock,
   editProductsStock,
   deleteProductsStock,
   deleteProductsPicture,
@@ -36,9 +37,8 @@ Router.get("/getselectedproductpicture/:id", getSelectedProductPicture);
 Router.get("/getlastproduct", getLastProduk);
 Router.get("/fetchuserproduct ", fetchUserProduct);
 Router.get("/getusercategoryselected/:category_id", getUserCategorySelected);
-
-// Router.put("/:id", uploader, editProducts)
-// Router.put("/pic/:product_image_id", uploader, editProductsPicture);
-// Router.put("/stock/:stock_id", uploader, editProductsStock);
+Router.get("/stock/:id", getSelectedProductStock);
+Router.delete("/stock/edit/:id", deleteProductsStock);
+Router.put("/stock/edit/:id", editProductsStock);
 
 module.exports = Router;
