@@ -1,4 +1,7 @@
-const {dbCon} = require('../connections')
+const {dbCon} = require('../connections') 
+const fs = require('fs')
+const {customAlphabet} = require('nanoid')
+const nanoid = customAlphabet('123456789abcdef',10)
 
 
 module.exports = { 
@@ -100,13 +103,16 @@ module.exports = {
     }, 
     getDataCart: async (req,res) => {
         const {id} = req.user 
-        let {product_id} = req.query 
+        // let {product_id} = req.query
         let conn,sql 
         try {
             conn = await dbCon.promise().getConnection()
 
-            sql = 'select * from cart join product on product.id = cart.product_id where user_id =? '
-            let [resultCart] = await conn.query(sql, [id,product_id])  
+            sql = `select cart.id, product_id, user_id, quantityCart, created_at, updated_at, product_name, hargaJual, unit,
+            (select sum(stock) from stock where product_id = cart.product_id) as total_stock from cart
+            join (select name as product_name, id, hargaJual, unit from product) as product on cart.product_id = product.id
+            where user_id =?`
+            let [resultCart] = await conn.query(sql, [id])  
             console.log('ini result cart', resultCart) 
             
             // looping insert totalHarga per product_id
@@ -114,6 +120,13 @@ module.exports = {
              let totalHarga = resultCart[i].quantityCart*resultCart[i].hargaJual 
              resultCart[i].totalHarga = totalHarga
             }
+
+            let sql_img = `select id, image from product_image where product_id = ? limit 1`
+            for (let i = 0; i < resultCart.length; i++) {
+                const element = resultCart[i];
+                let [images] = await conn.query(sql_img, element.id);
+                resultCart[i].images = images;
+              }
             
             // sql = `select stock from stock where product_id = ?`
             // let [resultQty] = await conn.query(sql, [product_id]) 
@@ -364,6 +377,82 @@ module.exports = {
         } catch (error) {
             console.log(error);
             return res.status(500).send({message : error.message || error})
+        }
+    },
+    uploadPayment: async (req,res) => {
+        let path = "/payment" 
+        const {payment} = req.files 
+
+        const imagePath = payment ? `${path}/${payment[0].filename}`:null
+
+        const {id} = req.user  
+        const {transaction_id} = req.query
+        let conn, sql 
+
+        try {
+            conn = await dbCon.promise().getConnection()
+
+            sql = `select transaction.user_id, transaction.id, transaction.status, transaction.recipient, transaction.transaction_number, transaction.address, address.address, address.firstname from transaction left join address on transaction.user_id = address.user_id where transaction.id =?` 
+            await conn.query(sql, [id])
+
+            sql = `select * from address where user_id=? and is_default='yes'`
+            let[result] = await conn.query(sql,[id])
+
+            sql = `update transaction set? where id=? `
+            let updateTransaction = { 
+                status: 'diproses', 
+                payment:imagePath
+            } 
+            await conn.query(sql,[updateTransaction,transaction_id,id] )
+            // let transId = resultPay.insertId 
+            conn.release()
+            return res.status(200).send({message: 'berhasil upload bukti pembayaran'})
+        } catch (error) {
+            // conn.release()
+            if(imagePath){
+                fs.unlinkSync('./public' + imagePath)
+            } 
+            console.log(error)
+            return res.status(500).send({message: error.message || error});
+        }
+    }, 
+    userCheckout: async (req,res) => {
+        // let path = "/payment" 
+        // const {payment} = req.files 
+
+        // const imagePath = payment ? `${path}/${payment[0].filename}`:null
+
+        const {id} = req.user 
+        let conn, sql 
+
+        try {
+            conn = await dbCon.promise().getConnection()
+
+            sql = `select transaction.user_id, transaction.id, transaction.status, transaction.recipient, transaction.transaction_number, transaction.address, address.address, address.firstname from transaction left join address on transaction.user_id = address.user_id` 
+            await conn.query(sql, [id])
+
+            sql = `select * from address where user_id=? and is_default='yes'`
+            let[result] = await conn.query(sql,[id])
+
+            sql = `insert into transaction set?`
+            let insertTransaction = { 
+                status: 'menunggu pembayaran', 
+                recipient: result[0].firstname,
+                transaction_number: nanoid(), 
+                address: result[0].address, 
+                user_id: id, 
+            } 
+            await conn.query(sql, insertTransaction)
+            // let transId = resultPay.insertId 
+            conn.release()
+            return res.status(200).send({message: 'berhasil checkout'})
+        } catch (error) {
+            // conn.release()
+            // if(imagePath){
+            //     fs.unlinkSync('./public' + imagePath)
+            // } 
+            console.log(error)
+            return res.status(500).send({message: error.message || error});
         }
     }
 }

@@ -2,9 +2,24 @@ const express = require('express')
 const Router = express.Router()
 const {transactionControllers} = require ('../controllers') 
 const { getAllAddress, defaultAddress } = require('../controllers/transactionControllers')
-const {addToCart, deleteCart, getDataCart, getCities,getProvinces, addAddress,plusCart, minCart,getAddress} = transactionControllers 
+const {
+    addToCart, 
+    deleteCart, 
+    getDataCart, 
+    getCities,
+    getProvinces, 
+    addAddress,
+    plusCart, 
+    minCart,
+    getAddress, 
+    uploadPayment, 
+    userCheckout} = transactionControllers 
 const {verifyTokenAccess, verifyTokenEmail} = require('../lib/verifyToken') 
+const upload = require('../lib/upload')
 
+const uploader = upload("/payment", "PAYMENT").fields([
+    { name: "payment", maxCount: 3 },
+  ])
 
 Router.post('/addToCart',verifyTokenAccess, addToCart)  
 Router.delete('/deleteCart', verifyTokenAccess, deleteCart) 
@@ -16,6 +31,8 @@ Router.get('/getProvinces', getProvinces)
 Router.post('/addAddress',verifyTokenAccess, addAddress)  
 Router.get('/getAddress', verifyTokenAccess, getAddress) 
 Router.get('/getAllAddress', verifyTokenAccess, getAllAddress)
-Router.put('/defaultAddress/', verifyTokenAccess, defaultAddress)
+Router.put('/defaultAddress/', verifyTokenAccess, defaultAddress)  
+Router.post('/userCheckout', verifyTokenAccess, userCheckout)
+Router.put('/uploadPayment', verifyTokenAccess, uploader, uploadPayment)
 
 module.exports = Router
