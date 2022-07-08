@@ -9,7 +9,6 @@ const upload = require("../lib/upload");
 const uploader = upload("/profile", "PROFILE").fields([
   { name: "profilepic", maxCount: 3 },
 ]);
-
 Router.put("/profilepic", verifyTokenAccess, uploader, editProfilePic);
 Router.put("/editprofile", verifyTokenAccess, editProfile);
 
