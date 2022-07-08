@@ -2,9 +2,9 @@ const express = require("express");
 const Router = express.Router();
 
 const {
-  fetchDaftarProduk,
-  fetchUserProduct,
-  getLastProduk,
+  getDaftarProductController,
+  getUserProduct,
+  getLastProduct,
   getCategoryObat,
   getUserCategorySelected,
   addProducts,
@@ -16,6 +16,9 @@ const {
   deleteProductsStock,
   deleteProductsPicture,
   getComponentObat,
+  getDetailProductController,
+  addToCartController,
+  getProdukTerkaitController,
   getSelectedProduct,
   getSelectedProductPicture,
 } = require("./../controllers/productControllers");
@@ -24,11 +27,20 @@ const upload = require("../lib/upload");
 const uploader = upload("/products", "PRODUCT").fields([
   { name: "products", maxCount: 3 },
 ]);
-Router.get("/fetchdaftarproduk", fetchDaftarProduk);
+
+const { verifyTokenAccess } = require("../lib/verifyToken");
+
+Router.get("/fetchdaftarproduk", getDaftarProductController);
 Router.get("/getcategory", getCategoryObat);
 Router.post("/addproduct", uploader, addProducts);
 Router.patch("/deleteproducts/:id", deleteProducts);
 Router.get("/component", getComponentObat);
+Router.get("/getlastproduct", getLastProduct);
+Router.get("/fetchuserproduct", getUserProduct);
+Router.get("/getusercategoryselected/:category_id", getUserCategorySelected);
+Router.get("/getdetailproduct/:product_id", getDetailProductController);
+Router.post("/addtocart", verifyTokenAccess, addToCartController);
+Router.get("/getprodukterkait", getProdukTerkaitController);
 Router.put("/:id", uploader, editProducts);
 Router.post("/pic", uploader, editProductsPicture);
 Router.delete("/pic/:id", deleteProductsPicture);

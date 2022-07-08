@@ -1,4 +1,7 @@
-const authService = require('./authService')
+const authService = require("./authService");
+const productService = require("./productService");
+
 module.exports = {
-    authService
-}
+  authService,
+  productService,
+};
