@@ -11,8 +11,10 @@ const {
   editProducts,
   deleteProducts,
   editProductsPicture,
+  getSelectedProductStock,
   editProductsStock,
   deleteProductsStock,
+  deleteProductsPicture,
   getComponentObat,
   getDetailProductController,
   addToCartController,
@@ -40,10 +42,15 @@ Router.get("/getdetailproduct/:product_id", getDetailProductController);
 Router.post("/addtocart", verifyTokenAccess, addToCartController);
 Router.get("/getprodukterkait", getProdukTerkaitController);
 Router.put("/:id", uploader, editProducts);
-Router.put("/pic/:id", uploader, editProductsPicture);
+Router.post("/pic", uploader, editProductsPicture);
+Router.delete("/pic/:id", deleteProductsPicture);
 Router.get("/getselectedproduct/:id", getSelectedProduct);
 Router.get("/getselectedproductpicture/:id", getSelectedProductPicture);
-// Router.put("/pic/:product_image_id", uploader, editProductsPicture);
-// Router.put("/stock/:stock_id", uploader, editProductsStock);
+Router.get("/getlastproduct", getLastProduct);
+// Router.get("/fetchuserproduct ", fetchUserProduct);
+Router.get("/getusercategoryselected/:category_id", getUserCategorySelected);
+Router.get("/stock/:id", getSelectedProductStock);
+Router.delete("/stock/edit/:id", deleteProductsStock);
+Router.put("/stock/edit/:id", editProductsStock);
 
 module.exports = Router;
