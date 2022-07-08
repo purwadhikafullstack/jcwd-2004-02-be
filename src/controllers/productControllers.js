@@ -1,16 +1,13 @@
 const { dbCon } = require("../connections");
 const db = require("../connections/mysqldb");
 const { json } = require("body-parser");
-<<<<<<< HEAD
 const fs = require("fs");
-=======
 const {
   getDaftarProductService,
   getDetailProductService,
   addToCartService,
   getProdukTerkaitService,
 } = require("../services/productService");
->>>>>>> development
 
 module.exports = {
   getDaftarProductController: async (req, res) => {
