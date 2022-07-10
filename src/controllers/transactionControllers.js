@@ -16,39 +16,59 @@ module.exports = {
             conn = await dbCon.promise().getConnection() 
             await conn.beginTransaction()
 
-            sql = 'select * from product where id=?'
-            let [result] = await conn.query(sql,[product_id,id]) 
-            console.log('ini result', result) 
+            // cek user udah ada barang yg sama di cart atu belum kaklau ada 
+            // tambah quantity saja tp kalu kosong baru masukin data baru ke cart
+            sql = `select id, quantityCart from cart where user_id=? and product_id=?` 
+            let [resultCart] = await conn.query(sql,[id, product_id])  
 
-            sql = `select * from users where id=?`
-            let [result2] = await conn.query(sql, [id])
-            console.log('ini result 2', result2);
+            //get total stock perproduct
+            sql =`select sum(stock) as total_stock from stock where product_id = ?` 
+            let [totalStock] = await conn.query(sql,[product_id]) 
+       
 
-            sql = `insert into cart set ?` 
-            let insertCart = {
-                user_id:id, 
-                product_id,
-                quantityCart
-            } 
-            let [resultCart] = await conn.query(sql,[insertCart,id] ) 
-            console.log('ini result cart', resultCart); 
-
-            sql = `select * from cart where product_id =?` 
-            let [resultQty] = await conn.query(sql,[product_id, id]) 
-            console.log('ini result qty', resultQty)
-
-            sql = `SELECT * from stock where product_id =?`
-            let [resultStock] = await conn.query(sql, product_id)  
-            console.log('ini result stock', resultStock)
-
-            let sisaStock = resultStock[0].stock - resultQty[0].quantityCart 
-            sisaStock = parseInt(sisaStock) 
-           
-            sql = `UPDATE stock set ? where product_id =?` 
-            let updateStock = {
-                stock: sisaStock
-            } 
-            await conn.query(sql, [updateStock,product_id]) 
+            if(resultCart.length){
+                let prevQuantity = resultCart[0].quantityCart 
+                let lastQantity = prevQuantity + parseInt(quantityCart) 
+                // cek lastqty not bigger than total stock
+                if (lastQantity > totalStock[0].total_stock) {
+                    throw `quantity melebihi stok`
+                }
+                sql= `update cart set ? where id = ?` 
+                let updateCart = {
+                    quantityCart: lastQantity
+                }
+                await conn.query(sql,[updateCart,resultCart[0].id]) 
+                console.log('ini quantity');
+            } else {
+                // cek lastqty not bigger than total stock
+                if (quantityCart > totalStock[0].total_stock) {
+                    throw `quantity melebihi stok`
+                }
+                sql = `insert into cart set ?` 
+                let insertCart = {
+                    user_id:id, 
+                    product_id,
+                    quantityCart
+                } 
+                await conn.query(sql,[insertCart] )  
+    
+                // sql = `select * from cart where product_id =?` 
+                // let [resultQty] = await conn.query(sql,[product_id, id]) 
+                // console.log('ini result qty', resultQty)
+    
+                // sql = `SELECT * from stock where product_id =? ans stock > 0 order by expired`
+                // let [resultStock] = await conn.query(sql, product_id)  
+                // console.log('ini result stock', resultStock)
+    
+                // let sisaStock = resultStock[0].stock - resultQty[0].quantityCart 
+                // sisaStock = parseInt(sisaStock) 
+               
+                // sql = `UPDATE stock set ? where product_id =?` 
+                // let updateStock = {
+                //     stock: sisaStock
+                // } 
+                // await conn.query(sql, [updateStock,product_id]) 
+            }
 
             conn.commit()
             conn.release()
@@ -59,40 +79,41 @@ module.exports = {
         }
     }, 
     deleteCart: async (req,res) => { 
-        const {id} = req.user 
-        let {product_id} = req.query 
+        // const {id} = req.user 
+        let {cart_id} = req.params
         let conn,sql 
 
         try {
             conn = await dbCon.promise().getConnection() 
 
             sql = `select * from cart where id=?` 
-            const [result] = await conn.query(sql, id)
+            const [result] = await conn.query(sql, cart_id) 
 
-            sql = `select * from cart where product_id =?` 
-            let [resultQty] = await conn.query(sql,product_id) 
-            console.log('ini result qty', resultQty)
+            //
 
-            sql = `SELECT * from stock where product_id =?`
-            let [resultStock] = await conn.query(sql, product_id)  
-            console.log('ini result stock', resultStock)
+            // sql = `select * from cart where product_id =?` 
+            // let [resultQty] = await conn.query(sql,product_id) 
+            // console.log('ini result qty', resultQty)
 
-            let sisaStock = resultStock[0].stock + resultQty[0].quantityCart
-            sisaStock = parseInt(sisaStock) 
+            // sql = `SELECT * from stock where product_id =?`
+            // let [resultStock] = await conn.query(sql, product_id)  
+            // console.log('ini result stock', resultStock)
+
+            // let sisaStock = resultStock[0].stock + resultQty[0].quantityCart
+            // sisaStock = parseInt(sisaStock) 
            
-            sql = `UPDATE stock set ? where product_id =?` 
-            let updateStock = {
-                stock: sisaStock
-            } 
-            await conn.query(sql, [updateStock,product_id])
+            // sql = `UPDATE stock set ? where product_id =?` 
+            // let updateStock = {
+            //     stock: sisaStock
+            // } 
+            // await conn.query(sql, [updateStock,product_id])
 
-            sql = `delete from cart where product_id=? and user_id=?`
-            await conn.query(sql, [product_id, id])  
+            sql = `delete from cart where id=?`
+            await conn.query(sql, [cart_id])  
 
-            sql = `select * from cart where user_id =?` 
-            let [resultdel] = await conn.query(sql,[id]) 
-            console.log('ini result qty', resultdel)
-
+            // sql = `select * from cart where user_id =?` 
+            // let [resultdel] = await conn.query(sql,[id]) 
+            // console.log('ini result qty', resultdel)
 
             conn.release()
             return res.status(200).send({message: 'berhasil delete cart'})
@@ -142,40 +163,48 @@ module.exports = {
     plusCart: async (req,res) =>{ 
         
         let {id} = req.user 
-        let {product_id} = req.query
+        // let {product_id} = req.query
+        let {cart_id} = req.params
         let conn,sql 
 
         try {
             conn = await dbCon.promise().getConnection() 
 
-            sql = `select quantityCart from cart where product_id=? and user_id=?`
-            let [result] = await conn.query(sql,[product_id,id])  
-            console.log('ini result', result)
+            sql = `select quantityCart,product_id from cart where id=?`
+            let [result] = await conn.query(sql,[cart_id])  
+            console.log('ini result', result) 
 
-            let plus = result[0].quantityCart + 1
+            sql =`select sum(stock) as total_stock from stock where product_id = ?` 
+            let [totalStock] = await conn.query(sql,[result[0].product_id]) 
 
-            sql = `update cart set? where product_id =? and user_id=? ` 
+            let plus = result[0].quantityCart + 1 
+
+            if (plus > totalStock[0].total_stock) {
+                throw 'quantity melebihi stok'
+            }
+
+            sql = `update cart set ? where id = ? ` 
             let updateQty = { 
                 quantityCart: plus
             } 
-            await conn.query(sql,[updateQty,product_id,id]) 
+            await conn.query(sql,[updateQty,cart_id]) 
 
-            sql = `select * from cart where product_id=? `
-            let [resultQty] = await conn.query(sql,[product_id])
-            console.log('ini result qty', resultQty);
+            // sql = `select * from cart where product_id = ? `
+            // let [resultQty] = await conn.query(sql,[product_id])
+            // console.log('ini result qty', resultQty);
 
-            sql = `SELECT * from stock where product_id =?`
-            let [resultStock] = await conn.query(sql, product_id)  
-            console.log('ini result stock', resultStock)
+            // sql = `SELECT * from stock where product_id =?`
+            // let [resultStock] = await conn.query(sql, product_id)  
+            // console.log('ini result stock', resultStock)
 
-            let sisaStock = resultStock[0].stock - 1
-            sisaStock = parseInt(sisaStock) 
+            // let sisaStock = resultStock[0].stock - 1
+            // sisaStock = parseInt(sisaStock) 
            
-            sql = `UPDATE stock set ? where product_id =?` 
-            let updateStock = {
-                stock: sisaStock
-            } 
-            await conn.query(sql, [updateStock,product_id])
+            // sql = `UPDATE stock set ? where product_id =?` 
+            // let updateStock = {
+            //     stock: sisaStock
+            // } 
+            // await conn.query(sql, [updateStock,product_id])
 
             conn.release()
             return res.status(200).send({message: 'plus cart'})
@@ -186,35 +215,39 @@ module.exports = {
     },
     minCart: async (req,res) =>{  
         const {id} = req.user 
-        let {product_id} = req.query
+        // let {product_id} = req.query 
+        let {cart_id} = req.params
         let conn,sql 
 
         try {
             conn = await dbCon.promise().getConnection() 
 
-            sql = `select quantityCart from cart where product_id=? and user_id=?`
-            let [result] = await conn.query(sql,[product_id,id]) 
+            sql = `select quantityCart from cart id=?`
+            let [result] = await conn.query(sql,[cart_id]) 
 
-            let min = result[0].quantityCart - 1
+            let min = result[0].quantityCart - 1 
+            if (min <= 0) {
+                throw 'tidak boleh 0'
+            }
 
-            sql = `update cart set? where product_id =? and user_id=?` 
+            sql = `update cart set? where cart_id=?` 
             let updateQty = { 
                 quantityCart: min
             } 
-            await conn.query(sql, [updateQty,product_id,id]) 
+            await conn.query(sql, [updateQty,cart_id]) 
 
-            sql = `SELECT * from stock where product_id =?`
-            let [resultStock] = await conn.query(sql, product_id)  
-            console.log('ini result stock', resultStock)
+            // sql = `SELECT * from stock where product_id =?`
+            // let [resultStock] = await conn.query(sql, product_id)  
+            // console.log('ini result stock', resultStock)
 
-            let sisaStock = resultStock[0].stock + 1
-            sisaStock = parseInt(sisaStock) 
+            // let sisaStock = resultStock[0].stock + 1
+            // sisaStock = parseInt(sisaStock) 
            
-            sql = `UPDATE stock set ? where product_id =?` 
-            let updateStock = {
-                stock: sisaStock
-            } 
-            await conn.query(sql, [updateStock,product_id])
+            // sql = `UPDATE stock set ? where product_id =?` 
+            // let updateStock = {
+            //     stock: sisaStock
+            // } 
+            // await conn.query(sql, [updateStock,product_id])
 
             conn.release()
             return res.status(200).send({message: 'min cart'})
@@ -336,7 +369,7 @@ module.exports = {
         try {
             conn = await dbCon.promise().getConnection() 
 
-            sql = `select * from address where user_id=?` 
+            sql = `select * from address where user_id=? order by is_default desc` 
             let [allAddress] = await conn.query(sql,id)
 
             conn.release()
@@ -393,7 +426,8 @@ module.exports = {
             conn = await dbCon.promise().getConnection()
 
             sql = `select transaction.user_id, transaction.id, transaction.status, transaction.recipient, transaction.transaction_number, transaction.address, address.address, address.firstname from transaction left join address on transaction.user_id = address.user_id where transaction.id =?` 
-            await conn.query(sql, [id])
+            let [resultTrans]=await conn.query(sql, [id])
+            console.log('ini result trans', resultTrans);
 
             sql = `select * from address where user_id=? and is_default='yes'`
             let[result] = await conn.query(sql,[id])
@@ -403,10 +437,10 @@ module.exports = {
                 status: 'diproses', 
                 payment:imagePath
             } 
-            await conn.query(sql,[updateTransaction,transaction_id,id] )
+            await conn.query(sql,[updateTransaction,transaction_id] )
             // let transId = resultPay.insertId 
             conn.release()
-            return res.status(200).send({message: 'berhasil upload bukti pembayaran'})
+            return res.status(200).send(resultTrans)
         } catch (error) {
             // conn.release()
             if(imagePath){
@@ -417,11 +451,8 @@ module.exports = {
         }
     }, 
     userCheckout: async (req,res) => {
-        // let path = "/payment" 
-        // const {payment} = req.files 
-
-        // const imagePath = payment ? `${path}/${payment[0].filename}`:null
-
+        
+        let {address,recipient} = req.body
         const {id} = req.user 
         let conn, sql 
 
@@ -431,26 +462,50 @@ module.exports = {
             sql = `select transaction.user_id, transaction.id, transaction.status, transaction.recipient, transaction.transaction_number, transaction.address, address.address, address.firstname from transaction left join address on transaction.user_id = address.user_id` 
             await conn.query(sql, [id])
 
-            sql = `select * from address where user_id=? and is_default='yes'`
+            sql = `select * from address where user_id = ? and is_default='yes'`
             let[result] = await conn.query(sql,[id])
 
-            sql = `insert into transaction set?`
+            sql = `insert into transaction set ?`
             let insertTransaction = { 
                 status: 'menunggu pembayaran', 
-                recipient: result[0].firstname,
+                recipient,
                 transaction_number: nanoid(), 
-                address: result[0].address, 
+                address, 
                 user_id: id, 
             } 
-            await conn.query(sql, insertTransaction)
-            // let transId = resultPay.insertId 
+            let [trans_id] = await conn.query(sql, insertTransaction)
+            console.log('ini result trasn id', trans_id); 
+
+            let transactionId = trans_id.insertId 
+
+            sql = `select cart.id, product_id, user_id, quantityCart, created_at, updated_at, product_name, hargaJual, unit,
+            (select sum(stock) from stock where product_id = cart.product_id) as total_stock from cart
+            join (select name as product_name, id, hargaJual, unit from product) as product on cart.product_id = product.id
+            where user_id =?`
+            let [resultCart] = await conn.query(sql, [id])  
+            console.log('ini result cart', resultCart) 
+            
+            // looping insert totalHarga per product_id
+            for (let i=0; i <resultCart.length; i++){
+             let totalHarga = resultCart[i].quantityCart*resultCart[i].hargaJual 
+             resultCart[i].totalHarga = totalHarga
+            }    
+
+            sql = `insert into transaction_detail set ?`
+            for (let i = 0; i < resultCart.length; i++) {
+                let insertTransactionDetail = {
+                    name: resultCart[i].product_name, 
+                    price: resultCart[i].hargaJual,
+                    quantity: resultCart[i].quantityCart,
+                    transaction_id: transactionId
+                }
+               await conn.query(sql,insertTransactionDetail)
+            } 
+            
             conn.release()
-            return res.status(200).send({message: 'berhasil checkout'})
+            return res.sendStatus(200).send(transactionId)
         } catch (error) {
-            // conn.release()
-            // if(imagePath){
-            //     fs.unlinkSync('./public' + imagePath)
-            // } 
+            
             console.log(error)
             return res.status(500).send({message: error.message || error});
         }
