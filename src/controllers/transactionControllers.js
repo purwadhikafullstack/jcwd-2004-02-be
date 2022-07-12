@@ -425,12 +425,12 @@ module.exports = {
         try {
             conn = await dbCon.promise().getConnection()
 
-            sql = `select transaction.user_id, transaction.id, transaction.status, transaction.recipient, transaction.transaction_number, transaction.address, address.address, address.firstname from transaction left join address on transaction.user_id = address.user_id where transaction.id =?` 
-            let [resultTrans]=await conn.query(sql, [id])
-            console.log('ini result trans', resultTrans);
+            // sql = `select transaction.user_id, transaction.id, transaction.status, transaction.recipient, transaction.transaction_number, transaction.address, address.address, address.firstname from transaction left join address on transaction.user_id = address.user_id where transaction.id =?` 
+            // let [resultTrans]=await conn.query(sql, [id])
+            // console.log('ini result trans', resultTrans);
 
-            sql = `select * from address where user_id=? and is_default='yes'`
-            let[result] = await conn.query(sql,[id])
+            // sql = `select * from address where user_id=? and is_default='yes'`
+            // let[result] = await conn.query(sql,[id])
 
             sql = `update transaction set? where id=? `
             let updateTransaction = { 
@@ -452,18 +452,45 @@ module.exports = {
     }, 
     userCheckout: async (req,res) => {
         
-        let {address,recipient} = req.body
+        let {address,recipient, bank_id, cart} = req.body
         const {id} = req.user 
-        let conn, sql 
+        let conn, sql  
+
+        console.log('ini cart bodynya', cart);
 
         try {
-            conn = await dbCon.promise().getConnection()
+            conn = await dbCon.promise().getConnection()  
+            await conn.beginTransaction()
 
-            sql = `select transaction.user_id, transaction.id, transaction.status, transaction.recipient, transaction.transaction_number, transaction.address, address.address, address.firstname from transaction left join address on transaction.user_id = address.user_id` 
-            await conn.query(sql, [id])
+            // ngecek total stok dulu pake sum kalo misalnya kurang throw error
+            // kalo misalnya ada kurangin stok baru jalanin insert 
+            // ambil stok dari semua tanggal expired di masing2 productid
+            // while loop kurangin dari array 0
 
-            sql = `select * from address where user_id = ? and is_default='yes'`
-            let[result] = await conn.query(sql,[id])
+            // sql = `select cart.id, product_id, user_id, quantityCart, created_at, updated_at, product_name, hargaJual, unit,
+            // (select sum(stock) from stock where product_id = cart.product_id) as total_stock from cart
+            // join (select name as product_name, id, hargaJual, unit from product) as product on cart.product_id = product.id
+            // where user_id =?`
+            // let [resultCart] = await conn.query(sql, [id])  
+            // console.log('ini result cart', resultCart)   
+
+            // ambil image product
+            // let sql_img = `select id, image from product_image where product_id = ? limit 1`
+            // for (let i = 0; i < cart.length; i++) {
+            //     const element = cart[i];
+            //     let [images] = await conn.query(sql_img, element.id);
+            //     cart[i].images = images;
+            //   }
+
+            //ngitung total stok sm quantity cart < total stok  
+            sql = `select sum(stock) as total_stock from stock where product_id = ?`
+            for (let i = 0; i < cart.length; i++) {
+                const element = cart[i]; 
+                let [totStock] = await conn.query (sql, element.product_id )
+                if (element.quantityCart > totStock[0].total_stock) {
+                    throw `maaf stok ${element.product_name} habis`
+                }
+            }
 
             sql = `insert into transaction set ?`
             let insertTransaction = { 
@@ -472,42 +499,104 @@ module.exports = {
                 transaction_number: nanoid(), 
                 address, 
                 user_id: id, 
+                bank_id
             } 
             let [trans_id] = await conn.query(sql, insertTransaction)
             console.log('ini result trasn id', trans_id); 
 
             let transactionId = trans_id.insertId 
-
-            sql = `select cart.id, product_id, user_id, quantityCart, created_at, updated_at, product_name, hargaJual, unit,
-            (select sum(stock) from stock where product_id = cart.product_id) as total_stock from cart
-            join (select name as product_name, id, hargaJual, unit from product) as product on cart.product_id = product.id
-            where user_id =?`
-            let [resultCart] = await conn.query(sql, [id])  
-            console.log('ini result cart', resultCart) 
             
-            // looping insert totalHarga per product_id
-            for (let i=0; i <resultCart.length; i++){
-             let totalHarga = resultCart[i].quantityCart*resultCart[i].hargaJual 
-             resultCart[i].totalHarga = totalHarga
-            }    
+            // // looping insert totalHarga per product_id
+            // for (let i=0; i <resultCart.length; i++){
+            //  let totalHarga = resultCart[i].quantityCart*resultCart[i].hargaJual 
+            //  resultCart[i].totalHarga = totalHarga
+            // }    
 
+            // insert transaction_detail
             sql = `insert into transaction_detail set ?`
-            for (let i = 0; i < resultCart.length; i++) {
+            for (let i = 0; i < cart.length; i++) {
                 let insertTransactionDetail = {
-                    name: resultCart[i].product_name, 
-                    price: resultCart[i].hargaJual,
-                    quantity: resultCart[i].quantityCart,
+                    name: cart[i].product_name, 
+                    price: cart[i].hargaJual,
+                    quantity: cart[i].quantityCart,
                     transaction_id: transactionId
                 }
                await conn.query(sql,insertTransactionDetail)
+            }  
+
+            sql = ` select id from transaction where id=?`
+            let [resultTrans] = await conn.query(sql,transactionId)  
+
+            // ngurangin stock
+            for (let i = 0; i < cart.length; i++) { 
+                let {product_id, quantityCart} = cart[i]
+                sql = `select id,stock from stock where product_id = ? and stock > 0 order by expired` 
+                let [resStock]= await conn.query (sql, product_id)
+                for (let j = 0; j < resStock.length; j++) {
+                    let sisaStock, x
+                    if (parseInt(resStock[j].stock) > parseInt(quantityCart)) {
+                        sisaStock = parseInt(resStock[j].stock) - parseInt(quantityCart) 
+                        x = quantityCart * -1
+                    } else {
+                        sisaStock = 0 
+                        x = resStock[j].stock * -1
+                    }
+                    sql = `update stock set ? where id = ?` 
+                    let updateStock = {
+                        stock: sisaStock
+                    }
+                    await conn.query(sql,[updateStock, resStock[j].id])  
+
+                    // sql = `select stock from stock where id =?` 
+                    // let [lastStock] = await conn.query(sql,resStock[j].id)
+
+                    sql = `insert into log set ?` 
+                    let insertLog = { 
+                        user_id: id, 
+                        activity: "barang diproses", 
+                        quantity: x,  
+                        stock_id: resStock[j].id, 
+                        transaction_id:transactionId 
+                    } 
+                    await conn.query(sql, insertLog) 
+                    
+                    quantityCart = parseInt(quantityCart) - parseInt(resStock[j].stock) 
+                    if (quantityCart < 1){
+                        break
+                    }
+                }
             } 
-            
-            conn.release()
-            return res.sendStatus(200).send(transactionId)
+
+            // for (let i = 0; i < cart.length; i++) {
+            //     const element = cart[i];
+            //     sql = `delete * from cart where user_id = ? and product_id = ?`;
+            //     await conn.query(sql, [id, element.product_id]);
+            //   }
+
+            conn.release() 
+            await conn.commit()
+            return res.status(200).send(resultTrans)
         } catch (error) {
-            
             console.log(error)
             return res.status(500).send({message: error.message || error});
+        }
+    }, 
+    getBank: async(req,res) => { 
+        // const {bank_id} = req.params
+        let conn, sql 
+
+        try {
+            conn = await dbCon.promise().getConnection() 
+
+            sql = `select * from bank  ` 
+            let [bank] = await conn.query(sql)  
+            console.log('ini banknya',bank);
+
+            conn.release() 
+            return res.status(200).send(bank)
+        } catch (error) {
+            console.log(error);
+            return res.status(500).send({message: error.message || error})
         }
     }
 }

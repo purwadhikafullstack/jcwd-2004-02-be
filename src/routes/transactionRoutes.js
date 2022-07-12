@@ -13,7 +13,8 @@ const {
     minCart,
     getAddress, 
     uploadPayment, 
-    userCheckout} = transactionControllers 
+    userCheckout, 
+    getBank} = transactionControllers 
 const {verifyTokenAccess, verifyTokenEmail} = require('../lib/verifyToken') 
 const upload = require('../lib/upload')
 
@@ -33,6 +34,7 @@ Router.get('/getAddress', verifyTokenAccess, getAddress)
 Router.get('/getAllAddress', verifyTokenAccess, getAllAddress)
 Router.put('/defaultAddress/', verifyTokenAccess, defaultAddress)  
 Router.post('/userCheckout/', verifyTokenAccess, userCheckout)
-Router.put('/uploadPayment', verifyTokenAccess, uploader, uploadPayment)
+Router.put('/uploadPayment', verifyTokenAccess, uploader, uploadPayment) 
+Router.get('/getBank', getBank)
 
 module.exports = Router
