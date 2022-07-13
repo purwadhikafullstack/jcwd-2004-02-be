@@ -222,7 +222,7 @@ module.exports = {
         try {
             conn = await dbCon.promise().getConnection() 
 
-            sql = `select quantityCart from cart id=?`
+            sql = `select quantityCart from cart where id=?`
             let [result] = await conn.query(sql,[cart_id]) 
 
             let min = result[0].quantityCart - 1 
@@ -230,11 +230,11 @@ module.exports = {
                 throw 'tidak boleh 0'
             }
 
-            sql = `update cart set? where cart_id=?` 
+            sql = `update cart set? where id=?` 
             let updateQty = { 
                 quantityCart: min
             } 
-            await conn.query(sql, [updateQty,cart_id]) 
+            await conn.query(sql, [updateQty,parseInt(cart_id)]) 
 
             // sql = `SELECT * from stock where product_id =?`
             // let [resultStock] = await conn.query(sql, product_id)  
@@ -425,16 +425,12 @@ module.exports = {
         try {
             conn = await dbCon.promise().getConnection()
 
-            // sql = `select transaction.user_id, transaction.id, transaction.status, transaction.recipient, transaction.transaction_number, transaction.address, address.address, address.firstname from transaction left join address on transaction.user_id = address.user_id where transaction.id =?` 
-            // let [resultTrans]=await conn.query(sql, [id])
-            // console.log('ini result trans', resultTrans);
-
-            // sql = `select * from address where user_id=? and is_default='yes'`
-            // let[result] = await conn.query(sql,[id])
+            sql = `select transaction.user_id, transaction.id, transaction.status, transaction.recipient, transaction.transaction_number, transaction.address, address.address, address.firstname from transaction left join address on transaction.user_id = address.user_id where transaction.id =?` 
+            let [resultTrans]=await conn.query(sql, [id])
 
             sql = `update transaction set? where id=? `
             let updateTransaction = { 
-                status: 'diproses', 
+                status: 'menunggu konfirmasi', 
                 payment:imagePath
             } 
             await conn.query(sql,[updateTransaction,transaction_id] )
@@ -519,7 +515,8 @@ module.exports = {
                     name: cart[i].product_name, 
                     price: cart[i].hargaJual,
                     quantity: cart[i].quantityCart,
-                    transaction_id: transactionId
+                    transaction_id: transactionId, 
+                    // image:images
                 }
                await conn.query(sql,insertTransactionDetail)
             }  
@@ -588,7 +585,7 @@ module.exports = {
         try {
             conn = await dbCon.promise().getConnection() 
 
-            sql = `select * from bank  ` 
+            sql = `select * from bank ` 
             let [bank] = await conn.query(sql)  
             console.log('ini banknya',bank);
 
@@ -598,5 +595,5 @@ module.exports = {
             console.log(error);
             return res.status(500).send({message: error.message || error})
         }
-    }
+    }, 
 }
