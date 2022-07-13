@@ -21,6 +21,8 @@ const {
   getProdukTerkaitController,
   getSelectedProduct,
   getSelectedProductPicture,
+  getSelectedProductStockDetail,
+  addProductsStock,
 } = require("./../controllers/productControllers");
 const upload = require("../lib/upload");
 
@@ -44,13 +46,17 @@ Router.get("/getprodukterkait", getProdukTerkaitController);
 Router.put("/:id", uploader, editProducts);
 Router.post("/pic", uploader, editProductsPicture);
 Router.delete("/pic/:id", deleteProductsPicture);
-Router.get("/getselectedproduct/:id", getSelectedProduct);
-Router.get("/getselectedproductpicture/:id", getSelectedProductPicture);
-Router.get("/getlastproduct", getLastProduct);
+Router.get("/product/:id", getSelectedProduct);
+Router.get("/productpic/:id", getSelectedProductPicture);
 // Router.get("/fetchuserproduct ", fetchUserProduct);
-Router.get("/getusercategoryselected/:category_id", getUserCategorySelected);
 Router.get("/stock/:id", getSelectedProductStock);
-Router.delete("/stock/edit/:id", deleteProductsStock);
-Router.put("/stock/edit/:id", editProductsStock);
+Router.get("/stock/edit/:id", getSelectedProductStockDetail);
+Router.delete(
+  "/stock/delete/:stock_id",
+  verifyTokenAccess,
+  deleteProductsStock
+);
+Router.put("/stock/edit/:stock_id", verifyTokenAccess, editProductsStock);
+Router.post("/stock/add/:product_id", verifyTokenAccess, addProductsStock);
 
 module.exports = Router;
