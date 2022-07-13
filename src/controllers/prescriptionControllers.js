@@ -25,15 +25,6 @@ module.exports = {
     let conn, sql;
     try {
       conn = await dbCon.promise().getConnection();
-      // get data untuk hapus imagepath foto lama
-      // sql = "select * from prescription where id =?";
-      // let [result] = await conn.query(sql, [id]);
-      // // masuk sini kalo gaada usernya
-      // console.log(result);
-      // if (!result.length) {
-      //   throw { message: "user tidak ditemukan" };
-      // }
-
       sql =
         " SELECT transaction.user_id, transaction.id, transaction.status, transaction.recipient, transaction.transaction_number, transaction.address, address.address, address.firstname  FROM transaction LEFT JOIN address ON transaction.user_id = address.user_id";
       let [resultjoin] = await conn.query(sql, [id]);
@@ -68,16 +59,12 @@ module.exports = {
         status: 1,
         user_id: id,
       };
+      if (insertDataImage.length) {
+        throw { message: "File ini melebihi 2MB atau format tidak sesuai!" };
+      }
       console.log(insertDataImage, "idi");
       await conn.query(sql, insertDataImage);
 
-      // sql = "insert into prescription set ?";
-      // let update = {
-      //   image: imagepath,
-      //   prescription_number: 1,
-      // };
-      // await conn.query(sql, [update, id]);
-      // kalo lewat sini berarti berhasil
       console.log("berhasil tambah");
 
       conn.release();

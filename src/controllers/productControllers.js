@@ -1,16 +1,13 @@
 const { dbCon } = require("../connections");
 const db = require("../connections/mysqldb");
 const { json } = require("body-parser");
-<<<<<<< HEAD
 const fs = require("fs");
-=======
 const {
   getDaftarProductService,
   getDetailProductService,
   addToCartService,
   getProdukTerkaitService,
 } = require("../services/productService");
->>>>>>> development
 
 module.exports = {
   getDaftarProductController: async (req, res) => {
@@ -88,7 +85,7 @@ module.exports = {
   getComponentObat: async (req, res) => {
     let conn, sql;
     try {
-      conn = dbCon.promise();
+      conn = await dbCon.promise().getConnection();
       sql = `select id, name from category`;
       let [category] = await conn.query(sql);
 
@@ -101,6 +98,7 @@ module.exports = {
       sql = `select id, name from type`;
       let [type] = await conn.query(sql);
 
+      await conn.commit();
       return res.status(200).send({ category, symptom, brand, type });
     } catch (error) {
       console.log(error);
@@ -134,7 +132,7 @@ module.exports = {
 
     let conn, sql;
     try {
-      conn = dbCon.promise();
+      conn = await dbCon.promise().getConnection();
       sql = `insert into product set ?`;
       let insertData = {
         name: data.name,
@@ -166,8 +164,8 @@ module.exports = {
         expired: data.expired,
         product_id: prodId,
       };
-      await conn.query(sql, insertDataStock);
-
+      let [resultStock] = await conn.query(sql, insertDataStock);
+      let stockId = resultStock.insertId;
       sql = `insert into symptom_product set ?`;
       for (let i = 0; i < data.symptom.length; i++) {
         let insertDataSymptom = {
@@ -186,6 +184,20 @@ module.exports = {
         await conn.query(sql, insertDataCategory);
       }
 
+      sql = `select stock from stock where id=? `;
+      let [sumStock] = await conn.query(sql, stockId);
+
+      sql = `insert into log set ?`;
+      let insertLog = {
+        activity: "Menambah Produk",
+        quantity: data.stock,
+        stock_id: stockId,
+        user_id: id,
+        stock: sumStock[0].stock,
+      };
+
+      await conn.query(sql, insertLog);
+      await conn.commit();
       return res.status(200).send({ message: "Berhasil Upload Obat" });
     } catch (error) {
       console.log(error);
@@ -200,7 +212,8 @@ module.exports = {
 
     let conn, sql;
     try {
-      conn = dbCon.promise();
+      conn = await dbCon.promise().getConnection();
+      await conn.beginTransaction();
 
       // get ID
       // name, description, warning, usage, brand_id, type_id, no_BPOM, no_obat
@@ -222,6 +235,10 @@ module.exports = {
 
         brand_id: data.brand_id,
         type_id: data.type_id,
+
+        unit: data.unit,
+        hargaJual: data.hargaJual,
+        hargaBeli: data.hargaBeli,
       };
       await conn.query(sql, [editDataProducts, id]);
       // if (!editData.length) {
@@ -249,10 +266,13 @@ module.exports = {
         };
         await conn.query(sql, insertDataCategory);
       }
-
+      await conn.commit();
+      conn.release();
       return res.status(200).send({ message: "Berhasil Update Obat" });
     } catch (error) {
       console.log(error);
+      conn.rollback();
+      conn.release();
       return res.status(500).send({ message: error.message || error });
     }
   },
@@ -525,7 +545,7 @@ module.exports = {
     let conn, sql;
     try {
       conn = await dbCon.promise().getConnection();
-      sql = `select id, name, no_obat, no_BPOM, brand_id, type_id, description, warning, product.usage from product where id = ?`;
+      sql = `select id, name, no_obat, no_BPOM, brand_id, type_id, description, warning, product.usage, unit, hargaJual, hargaBeli from product where id = ?`;
       let [product] = await conn.query(sql, id);
 
       sql = `select type.id, type.name from type inner join product on product.type_id=type.id where product.id=?`;
@@ -582,7 +602,7 @@ module.exports = {
     let conn, sql;
     try {
       conn = await dbCon.promise().getConnection();
-      sql = `select id, expired, stock from stock where product_id = ?`;
+      sql = `select id, expired, stock from stock where product_id = ? and stock > 0  order by expired `;
       [stock] = await conn.query(sql, id);
       console.log(stock, "stock");
       await conn.commit();
@@ -592,44 +612,169 @@ module.exports = {
       return res.status(500).send({ message: error.message || error });
     }
   },
-  editProductsStock: async (req, res) => {
-    const data = req.body;
+  getSelectedProductStockDetail: async (req, res) => {
     let { id } = req.params;
     let conn, sql;
     try {
       conn = await dbCon.promise().getConnection();
       sql = `select expired, stock from stock where id = ?`;
-      await conn.query(sql, id);
+      [stock] = await conn.query(sql, id);
+      console.log(stock, "stock");
+      await conn.commit();
+      return res.status(200).send(stock[0]);
+    } catch (error) {
+      console.log(error);
+      return res.status(500).send({ message: error.message || error });
+    }
+  },
+  addProductsStock: async (req, res) => {
+    const { id } = req.user;
+    const data = req.body;
+    const { product_id } = req.params;
+    let conn, sql;
+    try {
+      console.log(id, "userid");
+      console.log(req.body, "reqbody");
+      conn = await dbCon.promise().getConnection();
+      await conn.beginTransaction();
+
+      sql = `select id, expired, stock from stock where product_id = ? and expired = ?`;
+      let [stock] = await conn.query(sql, [product_id, data.expired]);
+
+      // apabila ada tgl sama
+      let stockId;
+      if (stock.length) {
+        stockId = stock[0].id;
+        sql = `update stock set ? where id =?`;
+
+        await conn.query(sql, [
+          { stock: parseInt(data.stock) + parseInt(stock[0].stock) },
+          stock[0].id,
+        ]);
+        // update kalau ada
+      } else {
+        // insert
+
+        sql = `insert into stock set ?`;
+        let insertData = {
+          expired: data.expired,
+          stock: data.stock,
+          product_id: product_id,
+        };
+
+        let [insertStock] = await conn.query(sql, insertData);
+        stockId = insertStock.insertId;
+      }
+
+      sql = `select stock from stock where id=? `;
+      let [sumStock] = await conn.query(sql, stockId);
+      console.log(sumStock, "sumstock");
+      sql = `insert into log set ?`;
+      let insertLog = {
+        activity: "Menambah Stok",
+        quantity: data.stock,
+        stock_id: stockId,
+        user_id: id,
+        stock: sumStock[0].stock,
+      };
+
+      await conn.query(sql, insertLog);
+      await conn.commit();
+      conn.release();
+      return res.status(200).send({ message: " berhasil tambah stock" });
+    } catch (error) {
+      conn.rollback();
+      conn.release();
+      return res.status(500).send({ message: error.message || error });
+    }
+  },
+  editProductsStock: async (req, res) => {
+    let { id } = req.user;
+    const data = req.body;
+    let { stock_id } = req.params;
+    let conn, sql;
+    try {
+      conn = await dbCon.promise().getConnection();
+      await conn.beginTransaction();
+      sql = `select id, expired, stock, product_id from stock where id = ?`;
+      let [getStock] = await conn.query(sql, stock_id);
 
       sql = `update stock set ? where id = ?`;
       let editStock = {
         expired: data.expired,
         stock: data.stock,
       };
-      await conn.query(sql, [editStock, id]);
+      await conn.query(sql, [editStock, stock_id]);
+
+      // memastikan plus atau minus
+
+      let stokChange;
+      if (getStock[0].stock == data.stock) {
+        await conn.commit();
+        conn.release();
+        return res.status(200).send({ message: "Berhasil Edit Stok" });
+      } else stokChange = data.stock - getStock[0].stock;
+
+      sql = `select stock from stock where id=? `;
+      let [sumStock] = await conn.query(sql, stock_id);
+
+      console.log(sumStock, "sumstok");
+      sql = `insert into log set ?`;
+      let insertLog = {
+        activity: "Revisi Stok",
+        quantity: stokChange,
+        stock_id: stock_id,
+        user_id: id,
+        stock: sumStock[0].stock,
+      };
+      await conn.query(sql, insertLog);
 
       await conn.commit();
+      conn.release();
       return res.status(200).send({ message: "Berhasil Edit Stok" });
     } catch (error) {
       console.log(error);
+      conn.rollback();
+      conn.release();
       return res.status(500).send({ message: error.message || error });
     }
   },
   deleteProductsStock: async (req, res) => {
-    let { id } = req.params;
+    let { id } = req.user;
+    let { stock_id } = req.params;
     let conn, sql;
     try {
       conn = await dbCon.promise().getConnection();
-      sql = `select expired, stock from stock where id = ?`;
-      await conn.query(sql, id);
+      await conn.beginTransaction();
+      sql = `select product_id, expired, stock from stock where id = ?`;
+      let [getStock] = await conn.query(sql, stock_id);
 
-      sql = `delete from stock where id = ?`;
-      await conn.query(sql, id);
-      await conn.query(sql, id);
+      sql = `update stock set ? where id = ?`;
+      let deleteStock = {
+        stock: 0,
+      };
+      await conn.query(sql, [deleteStock, stock_id]);
+      console.log(getStock[0].stock, "getstok");
+      console.log(getStock[0], "getstok");
+      sql = `select stock from stock where id=? `;
+      let [sumStock] = await conn.query(sql, stock_id);
+
+      sql = `insert into log set ?`;
+      let insertLog = {
+        activity: "Menghapus Stok",
+        quantity: getStock[0].stock * -1,
+        stock_id: stock_id,
+        user_id: id,
+        stock: sumStock[0].stock,
+      };
+      await conn.query(sql, insertLog);
 
       await conn.commit();
+      conn.release();
       return res.status(200).send({ message: "Berhasil Menghapus Obat" });
     } catch (error) {
+      conn.rollback();
+      conn.release();
       console.log(error);
       return res.status(500).send({ message: error.message || error });
     }
