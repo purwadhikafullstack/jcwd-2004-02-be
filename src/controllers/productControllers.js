@@ -602,7 +602,7 @@ module.exports = {
     let conn, sql;
     try {
       conn = await dbCon.promise().getConnection();
-      sql = `select id, expired, stock from stock where product_id = ? and stock > 0`;
+      sql = `select id, expired, stock from stock where product_id = ? and stock > 0  order by expired `;
       [stock] = await conn.query(sql, id);
       console.log(stock, "stock");
       await conn.commit();

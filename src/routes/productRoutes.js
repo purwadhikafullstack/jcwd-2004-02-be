@@ -34,8 +34,8 @@ const { verifyTokenAccess } = require("../lib/verifyToken");
 
 Router.get("/fetchdaftarproduk", getDaftarProductController);
 Router.get("/getcategory", getCategoryObat);
-Router.post("/addproduct", uploader, addProducts);
-Router.patch("/deleteproducts/:id", deleteProducts);
+Router.post("/addproduct", uploader, verifyTokenAccess, addProducts);
+Router.patch("/deleteproducts/:id", verifyTokenAccess, deleteProducts);
 Router.get("/component", getComponentObat);
 Router.get("/getlastproduct", getLastProduct);
 Router.get("/fetchuserproduct", getUserProduct);
@@ -43,12 +43,11 @@ Router.get("/getusercategoryselected/:category_id", getUserCategorySelected);
 Router.get("/getdetailproduct/:product_id", getDetailProductController);
 Router.post("/addtocart", verifyTokenAccess, addToCartController);
 Router.get("/getprodukterkait", getProdukTerkaitController);
-Router.put("/:id", uploader, editProducts);
+Router.put("/:id", uploader, verifyTokenAccess, editProducts);
 Router.post("/pic", uploader, editProductsPicture);
 Router.delete("/pic/:id", deleteProductsPicture);
 Router.get("/product/:id", getSelectedProduct);
 Router.get("/productpic/:id", getSelectedProductPicture);
-// Router.get("/fetchuserproduct ", fetchUserProduct);
 Router.get("/stock/:id", getSelectedProductStock);
 Router.get("/stock/edit/:id", getSelectedProductStockDetail);
 Router.delete(
