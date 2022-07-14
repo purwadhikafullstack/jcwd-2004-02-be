@@ -664,7 +664,7 @@ module.exports = {
 
             sql = `update transaction set ? where id=?`
             let updateTransaction = { 
-                status: 'transaksi dibatalkan', 
+                status: 'dibatalkan', 
             } 
             await conn.query(sql,[updateTransaction, transaction_id] ) 
 
@@ -690,7 +690,7 @@ module.exports = {
                     sql = `insert into log set ?` 
                     let insertLog = { 
                         user_id: id, 
-                        activity: "transaksi dibatalkan", 
+                        activity: "dibatalkan", 
                         quantity: x,  
                         stock_id: stock_id, 
                         transaction_id:transaction_id
