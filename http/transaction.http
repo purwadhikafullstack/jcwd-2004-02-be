@@ -1,0 +1,15 @@
+GET http://localhost:5000/transaction/getusertransaction?filter=resep HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NSwibmFtZSI6IkdyaXNlbGRhIEF0aGFsbGFoIFNpbHZpeWFuYSIsInJvbGVfaWQiOjAsImlhdCI6MTY1NzczMzUwMywiZXhwIjoxNjU3NzYyMzAzfQ.uO1uI7ZKHG9oi5B0q60wydTtBYQzhOfsR750lyNpePE
+###
+
+GET http://localhost:5000/transaction/getdetailtransaction/2 HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NSwibmFtZSI6IkdyaXNlbGRhIEF0aGFsbGFoIFNpbHZpeWFuYSIsInJvbGVfaWQiOjAsImlhdCI6MTY1Nzc3MTAwNiwiZXhwIjoxNjU3Nzk5ODA2fQ.MSEJp2i169pkWisv-tEl8g7kfzmlqwP89HfMHn-zG5w
+
+###
+GET http://localhost:5000/transaction/getalltransaction? HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NSwibmFtZSI6IkdyaXNlbGRhIEF0aGFsbGFoIFNpbHZpeWFuYSIsInJvbGVfaWQiOjAsImlhdCI6MTY1Nzc3MTAwNiwiZXhwIjoxNjU3Nzk5ODA2fQ.MSEJp2i169pkWisv-tEl8g7kfzmlqwP89HfMHn-zG5w
+
+###
