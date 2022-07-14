@@ -26,9 +26,11 @@ module.exports = {
       let [result1] = await conn.query(sql, [id]);
 
       console.log(result1, "berhasil update bio");
+      conn.release();
       return res.status(200).send(result1[0]);
     } catch (error) {
       console.log(error);
+      conn.release();
       return res.status(500).send({ message: error.message || error });
     }
   },

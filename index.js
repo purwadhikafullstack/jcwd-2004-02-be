@@ -32,10 +32,12 @@ const { productRoutes } = require("./src/routes");
 const { authRoutes } = require("./src/routes");
 const { profileRoutes } = require("./src/routes");
 const { prescriptionRoutes } = require("./src/routes");
+const { transactionRoutes } = require("./src/routes");
 
 app.use("/auth", authRoutes);
 app.use("/products", productRoutes);
 app.use("/profile", profileRoutes);
+app.use("/transaction", transactionRoutes);
 app.use("/prescription", prescriptionRoutes);
 
 app.listen(PORT, () =>

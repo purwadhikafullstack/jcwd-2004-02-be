@@ -16,6 +16,5 @@ Router.post(
   uploader,
   addPrescriptionPic
 );
-// Router.put("/editprofile", verifyTokenAccess, editProfile);
 
 module.exports = Router;
