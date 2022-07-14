@@ -45,7 +45,7 @@ module.exports = {
         (select sum(stock) from stock where product_id = product.id) as total_stock from product
         inner join category_product on product.id = category_product.product_id
         left join (select name as category_name, id from category) as kategori on category_id = kategori.id
-        where true ${search} ${category} and product.is_deleted = "no" group by product.id ${order} LIMIT ${dbCon.escape(
+        where true ${search} ${category} and product.is_deleted = 'no' group by product.id ${order} LIMIT ${dbCon.escape(
         offset
       )}, ${dbCon.escape(limit)}`;
       let [data] = await conn.query(sql);
@@ -155,7 +155,7 @@ module.exports = {
       inner join (select symptom_id,product_id from symptom_product) as symptom_product on product.id = symptom_product.product_id
       left join (select name as symptom_name, id from symptom) as symptom on symptom_id = symptom.id
       left join (select name as category_name, id from category) as kategori on category_id = kategori.id
-      where true and brand_name = '${brand}' and product.is_deleted = "no" group by product.id LIMIT 0,7`;
+      where true and brand_name = '${brand}' and product.is_deleted = 'no' group by product.id LIMIT 0,7`;
 
       let [data] = await conn.query(sql);
 

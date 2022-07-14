@@ -21,7 +21,12 @@ app.use(express.json());
 
 app.use(
   cors({
-    exposedHeaders: ["x-total-product", "x-total-count", "x-token-access"],
+    exposedHeaders: [
+      "x-total-product",
+      "x-total-count",
+      "x-token-access",
+      "x-total-transaction",
+    ],
   })
 );
 
@@ -39,6 +44,7 @@ app.use("/products", productRoutes);
 app.use("/profile", profileRoutes);
 app.use("/transaction", transactionRoutes);
 app.use("/prescription", prescriptionRoutes);
+app.use("/transaction", transactionRoutes);
 
 app.listen(PORT, () =>
   console.log(`Server in ${process.env.STATUS} mode, listening on ${PORT}`)
