@@ -30,10 +30,10 @@ module.exports = {
       conn = await dbCon.promise().getConnection();
       sql =
         "select image, prescription_number, created_at from prescription where transaction_id=? ";
-      let [image] = await conn.query(sql, transaction_id);
-      console.log(image, "image");
+      let [prescription] = await conn.query(sql, transaction_id);
+
       conn.release();
-      return res.status(200).send(image);
+      return res.status(200).send(prescription);
     } catch (error) {
       conn.release();
       return res.status(500).send({ message: error.message || error });
