@@ -151,9 +151,16 @@ module.exports = {
     }
 
     if (search) {
-      search = `and recipient like '%${search}%'`;
+      search = `and transaction.recipient like '%${search}%' or transaction.transaction_number like '%${search}%'`;
     } else {
       search = ``;
+    }
+
+    let transaction_date;
+    if (!from_date) {
+      transaction_date = ``;
+    } else {
+      transaction_date = `AND transaction.created_at between '${from_date}' AND '${to_date}'`;
     }
 
     if (!page) {
@@ -174,7 +181,7 @@ module.exports = {
       // get user's all transaction
       sql = `select transaction.id, status, expired_at, recipient, payment, courier, address, transaction_number, updated_at, created_at, prescription_number, pr_status, pr_image from transaction
             left join (select prescription_number, status as pr_status, image as pr_image, transaction_id from prescription) as prescription on transaction.id = prescription.transaction_id
-            where true ${search} ${filter} ${sort} LIMIT ${dbCon.escape(
+            where true ${search} ${filter} ${sort} ${transaction_date} LIMIT ${dbCon.escape(
         offset
       )}, ${dbCon.escape(limit)}`;
       let [data] = await conn.query(sql);
@@ -204,10 +211,11 @@ module.exports = {
       // count user's total transaction
       sql = `select count(*) as total_transaction from (select transaction.id, status, expired_at, recipient, payment, courier, address, transaction_number, updated_at, created_at, prescription_number from transaction
       left join (select prescription_number, transaction_id from prescription) as prescription on transaction.id = prescription.transaction_id
-      where true ${filter} ${sort}) as table_data`;
+      where true ${search} ${filter} ${sort} ${transaction_date}) as table_data`;
       let [totalData] = await conn.query(sql);
 
       await conn.commit();
+      conn.release();
       return { data, totalData };
     } catch (error) {
       conn.rollback();
