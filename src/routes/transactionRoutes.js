@@ -4,8 +4,6 @@ const { transactionControllers } = require("../controllers");
 const {
   getAllAddress,
   defaultAddress,
-} = require("../controllers/transactionControllers");
-const {
   addToCart,
   deleteCart,
   getDataCart,
@@ -20,7 +18,12 @@ const {
   getUserTransactionController,
   getDetailTransactionController,
   getAllTransactionController,
+  getBank,
+  acceptPayment,
+  rejectPayment,
+  getWaitingPaymentByTransactionId,
 } = transactionControllers;
+
 const { verifyTokenAccess, verifyTokenEmail } = require("../lib/verifyToken");
 const upload = require("../lib/upload");
 
@@ -29,18 +32,26 @@ const uploader = upload("/payment", "PAYMENT").fields([
 ]);
 
 Router.post("/addToCart", verifyTokenAccess, addToCart);
-Router.delete("/deleteCart", verifyTokenAccess, deleteCart);
+Router.delete("/deleteCart/:cart_id", verifyTokenAccess, deleteCart);
 Router.get("/getDataCart", verifyTokenAccess, getDataCart);
-Router.put("/plusCart", verifyTokenAccess, plusCart);
-Router.put("/minCart", verifyTokenAccess, minCart);
+Router.put("/plusCart/:cart_id", verifyTokenAccess, plusCart);
+Router.put("/minCart/:cart_id", verifyTokenAccess, minCart);
 Router.get("/getCities/:province_id", getCities);
 Router.get("/getProvinces", getProvinces);
 Router.post("/addAddress", verifyTokenAccess, addAddress);
 Router.get("/getAddress", verifyTokenAccess, getAddress);
 Router.get("/getAllAddress", verifyTokenAccess, getAllAddress);
 Router.put("/defaultAddress/", verifyTokenAccess, defaultAddress);
-Router.post("/userCheckout", verifyTokenAccess, userCheckout);
+Router.post("/userCheckout/", verifyTokenAccess, userCheckout);
 Router.put("/uploadPayment", verifyTokenAccess, uploader, uploadPayment);
+Router.get("/getBank", getBank);
+Router.put("/acceptPayment/:transaction_id", acceptPayment);
+Router.post("/rejectPayment/:transaction_id", verifyTokenAccess, rejectPayment);
+Router.get(
+  "/waitingPayment/:transaction_id",
+  verifyTokenAccess,
+  getWaitingPaymentByTransactionId
+);
 Router.get(
   "/getusertransaction",
   verifyTokenAccess,
