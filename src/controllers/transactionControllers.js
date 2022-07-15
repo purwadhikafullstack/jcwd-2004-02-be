@@ -519,7 +519,8 @@ module.exports = {
     try {
       conn = await dbCon.promise().getConnection();
 
-      sql = "select id, name, hargaJual, hargaBeli from product order by name";
+      sql = `select id, name, hargaJual, hargaBeli, 
+      (select sum(stock) from stock where product_id = product.id) as total_stock from product order by name`;
       let [product] = await conn.query(sql);
       sql = "select image from product_image where product_id=?";
       for (let i = 0; i < product.length; i++) {
@@ -527,6 +528,7 @@ module.exports = {
         let image = productImg[0].image;
         product[i] = { ...product[i], image };
       }
+      sql = "select stock from stock where product_id=?";
       conn.release();
       return res.status(200).send({ product });
     } catch (error) {
@@ -577,9 +579,15 @@ module.exports = {
       let insertPrescription = {
         nama_dokter: data.nama_dokter,
         nama_pasien: data.nama_pasien,
-        status: "terkonfimasi",
+        status: 2,
       };
       await conn.query(sql, [insertPrescription, transaction_id]);
+
+      sql = "update transaction set ? where id = ?";
+      let insertTransaction = {
+        status: 2,
+      };
+      await conn.query(sql, [insertTransaction, transaction_id]);
 
       conn.release();
       return res.status(200).send({ message: "Berhasil Upload Resep" });
