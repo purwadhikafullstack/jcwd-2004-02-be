@@ -45,7 +45,7 @@ module.exports = {
         (select sum(stock) from stock where product_id = product.id) as total_stock from product
         inner join category_product on product.id = category_product.product_id
         left join (select name as category_name, id from category) as kategori on category_id = kategori.id
-        where true ${search} ${category} and product.is_deleted = "no" group by product.id ${order} LIMIT ${dbCon.escape(
+        where true ${search} ${category} and product.is_deleted = 'no' group by product.id ${order} LIMIT ${dbCon.escape(
         offset
       )}, ${dbCon.escape(limit)}`;
       let [data] = await conn.query(sql);
@@ -109,7 +109,7 @@ module.exports = {
       conn = await dbCon.promise().getConnection();
       await conn.beginTransaction();
 
-      sql = `select id, quantity from cart where user_id = ? and product_id = ?`;
+      sql = `select id, quantityCart from cart where user_id = ? and product_id = ?`;
       let [selectedProduct] = await conn.query(sql, [id, product_id]);
 
       let result;
@@ -117,19 +117,20 @@ module.exports = {
         let cart_id = selectedProduct[0].id;
         let current_quantity = parseInt(selectedProduct[0].quantity);
         quantity = current_quantity + quantity;
-        sql = `update cart set quantity = ? where id = ?`;
+        sql = `update cart set quantityCart = ? where id = ?`;
         [result] = await conn.query(sql, [quantity, cart_id]);
       } else {
         sql = `insert into cart set ?`;
         const product_data = {
           user_id: id,
           product_id,
-          quantity,
+          quantityCart: quantity,
         };
         [result] = await conn.query(sql, product_data);
       }
 
       conn.commit();
+      conn.release();
       return result[0];
     } catch (error) {
       console.log(error);
@@ -155,7 +156,7 @@ module.exports = {
       inner join (select symptom_id,product_id from symptom_product) as symptom_product on product.id = symptom_product.product_id
       left join (select name as symptom_name, id from symptom) as symptom on symptom_id = symptom.id
       left join (select name as category_name, id from category) as kategori on category_id = kategori.id
-      where true and brand_name = '${brand}' and product.is_deleted = "no" group by product.id LIMIT 0,7`;
+      where true and brand_name = '${brand}' and product.is_deleted = 'no' group by product.id LIMIT 0,7`;
 
       let [data] = await conn.query(sql);
 

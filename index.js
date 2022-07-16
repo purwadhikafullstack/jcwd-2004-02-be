@@ -21,7 +21,12 @@ app.use(express.json());
 
 app.use(
   cors({
-    exposedHeaders: ["x-total-product", "x-total-count", "x-token-access"],
+    exposedHeaders: [
+      "x-total-product",
+      "x-total-count",
+      "x-token-access",
+      "x-total-transaction",
+    ],
   })
 );
 
@@ -31,16 +36,14 @@ app.use(express.static("public"));
 const { productRoutes } = require("./src/routes");
 const { authRoutes } = require("./src/routes");
 const { profileRoutes } = require("./src/routes");
-const { prescriptionRoutes } = require("./src/routes"); 
-const {transactionRoutes} = require("./src/routes");
-
+const { prescriptionRoutes } = require("./src/routes");
+const { transactionRoutes } = require("./src/routes");
 
 app.use("/auth", authRoutes);
 app.use("/products", productRoutes);
 app.use("/profile", profileRoutes);
-app.use("/prescription", prescriptionRoutes); 
-app.use("/transaction", transactionRoutes)
-
+app.use("/prescription", prescriptionRoutes);
+app.use("/transaction", transactionRoutes);
 
 app.listen(PORT, () =>
   console.log(`Server in ${process.env.STATUS} mode, listening on ${PORT}`)
