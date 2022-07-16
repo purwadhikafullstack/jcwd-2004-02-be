@@ -76,4 +76,20 @@ module.exports = {
       return res.status(500).send({ message: error.message || error });
     }
   },
+  getAddress: async (req, res) => {
+    const { id } = req.user;
+    let conn, sql;
+    try {
+      conn = await dbCon.promise().getConnection();
+      sql = `select address.address, address.phonenumber, address.firstname, address.lastname, province.name as province, city.name as city from address left join province on address.province_id= province.id left join city on address.city_id=city.id where user_id=?`;
+      [address] = await conn.query(sql, id);
+
+      conn.release();
+      return res.status(200).send(address);
+    } catch (error) {
+      console.log(error);
+      conn.release();
+      return res.status(500).send({ message: error.message || error });
+    }
+  },
 };
