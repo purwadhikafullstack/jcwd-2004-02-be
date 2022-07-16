@@ -143,7 +143,7 @@ module.exports = {
             join (select name as product_name, id, hargaJual,hargaBeli, unit from product) as product on cart.product_id = product.id
             where user_id =?`
             let [resultCart] = await conn.query(sql, [id])  
-            console.log('ini result cart', resultCart) 
+             
             
             // looping insert totalHarga per product_id
             for (let i=0; i <resultCart.length; i++){
@@ -154,7 +154,7 @@ module.exports = {
             let sql_img = `select id, image from product_image where product_id = ? limit 1`
             for (let i = 0; i < resultCart.length; i++) {
                 const element = resultCart[i];
-                let [images] = await conn.query(sql_img, element.id);
+                let [images] = await conn.query(sql_img, element.product_id);
                 resultCart[i].images = images[0] || null;
               } 
               console.log('ini result cart ya', resultCart);
