@@ -23,6 +23,10 @@ const {
   getObat,
   getPrescription,
   submitPrescription,
+  getBank,
+  acceptPayment,
+  rejectPayment,
+  getWaitingPaymentByTransactionId,
 } = transactionControllers;
 const { verifyTokenAccess, verifyTokenEmail } = require("../lib/verifyToken");
 const upload = require("../lib/upload");
@@ -44,6 +48,17 @@ Router.get("/getAllAddress", verifyTokenAccess, getAllAddress);
 Router.put("/defaultAddress/", verifyTokenAccess, defaultAddress);
 Router.post("/userCheckout", verifyTokenAccess, userCheckout);
 Router.put("/uploadPayment", verifyTokenAccess, uploader, uploadPayment);
+
+Router.delete("/deleteCart/:cart_id", verifyTokenAccess, deleteCart);
+Router.get("/getBank", getBank);
+Router.put("/acceptPayment/:transaction_id", acceptPayment);
+Router.post("/rejectPayment/:transaction_id", verifyTokenAccess, rejectPayment);
+Router.get(
+  "/waitingPayment/:transaction_id",
+  verifyTokenAccess,
+  getWaitingPaymentByTransactionId
+);
+
 Router.get(
   "/getusertransaction",
   verifyTokenAccess,
