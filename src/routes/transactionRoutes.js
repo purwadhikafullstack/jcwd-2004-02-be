@@ -42,7 +42,7 @@ Router.post("/addAddress", verifyTokenAccess, addAddress);
 Router.get("/getAddress", verifyTokenAccess, getAddress);
 Router.get("/getAllAddress", verifyTokenAccess, getAllAddress);
 Router.put("/defaultAddress/", verifyTokenAccess, defaultAddress);
-Router.post("/userCheckout/", verifyTokenAccess, userCheckout);
+Router.post("/userCheckout", verifyTokenAccess, userCheckout);
 Router.put("/uploadPayment", verifyTokenAccess, uploader, uploadPayment);
 Router.get("/getBank", getBank);
 Router.put("/acceptPayment/:transaction_id", acceptPayment);

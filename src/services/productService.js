@@ -109,7 +109,7 @@ module.exports = {
       conn = await dbCon.promise().getConnection();
       await conn.beginTransaction();
 
-      sql = `select id, quantity from cart where user_id = ? and product_id = ?`;
+      sql = `select id, quantityCart from cart where user_id = ? and product_id = ?`;
       let [selectedProduct] = await conn.query(sql, [id, product_id]);
 
       let result;
@@ -117,19 +117,20 @@ module.exports = {
         let cart_id = selectedProduct[0].id;
         let current_quantity = parseInt(selectedProduct[0].quantity);
         quantity = current_quantity + quantity;
-        sql = `update cart set quantity = ? where id = ?`;
+        sql = `update cart set quantityCart = ? where id = ?`;
         [result] = await conn.query(sql, [quantity, cart_id]);
       } else {
         sql = `insert into cart set ?`;
         const product_data = {
           user_id: id,
           product_id,
-          quantity,
+          quantityCart: quantity,
         };
         [result] = await conn.query(sql, product_data);
       }
 
       conn.commit();
+      conn.release();
       return result[0];
     } catch (error) {
       console.log(error);
