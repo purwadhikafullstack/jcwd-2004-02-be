@@ -540,8 +540,8 @@ module.exports = {
                     quantity: cart[i].quantityCart,
                     transaction_id: transactionId, 
                     image:cart[i].images,  
-                    hargaBeli: cart[i].hargaBeli
-                    //unit
+                    hargaBeli: cart[i].hargaBeli,
+                    unit: cart[i].unit
                 }
                await conn.query(sql,insertTransactionDetail)
             }  
@@ -624,6 +624,26 @@ module.exports = {
             return res.status(500).send({message: error.message || error})
         }
     }, 
+    getShippingCost: async(req, res) => {
+      let {CityId} = req.query 
+      
+      try {
+        let res = await axios.post (
+          "https://api.rajaongkir.com/starter/cost",
+        { origin: "152", destination: CityId, weight: 1000, courier: "jne" },
+        {
+          headers: { key: "2aa8392bfd96d0b0af0f4f7db657cd8e" },
+        }
+
+        )
+         let ongkos = res.data.rajaongkir.result[0].cost[0].value
+        
+        return res.status(200).send(ongkos)
+      } catch (error) {
+        console.log(error);
+        return res.status(500).send({message: error.message || error})
+      }
+    },
     acceptPayment: async(req,res) => {
         // const {id} = req.user  
         const {transaction_id} = req.params

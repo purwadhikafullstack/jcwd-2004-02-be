@@ -496,9 +496,9 @@ module.exports = {
   },
   addToCartController: async (req, res) => {
     const { id } = req.user;
-    const { product_id, quantity } = req.body;
+    const { product_id, quantityCart } = req.body;
     try {
-      let result = await addToCartService(id, product_id, quantity);
+      let result = await addToCartService(id, product_id, quantityCart);
 
       return res
         .status(200)
