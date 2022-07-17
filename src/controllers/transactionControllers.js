@@ -146,6 +146,7 @@ module.exports = {
             join (select name as product_name, id, hargaJual,hargaBeli, unit from product) as product on cart.product_id = product.id
             where user_id =?`;
       let [resultCart] = await conn.query(sql, [id]);
+      console.log("ini result cart", resultCart);
 
       // looping insert totalHarga per product_id
       for (let i = 0; i < resultCart.length; i++) {
@@ -153,11 +154,11 @@ module.exports = {
         resultCart[i].totalHarga = totalHarga;
       }
 
-      let sql_img = `select id, image from product_image where product_id = ? limit 1`;
+      let sql_img = `select id, image from product_image where product_id = ?`;
       for (let i = 0; i < resultCart.length; i++) {
         const element = resultCart[i];
         let [images] = await conn.query(sql_img, element.product_id);
-        resultCart[i].images = images[0] || null;
+        resultCart[i].images = images;
       }
       console.log("ini result cart ya", resultCart);
 
@@ -178,9 +179,11 @@ module.exports = {
     // let {product_id} = req.query
     let { cart_id } = req.params;
     let conn, sql;
-
     try {
       conn = await dbCon.promise().getConnection();
+      // sql = `select stock from stock where product_id = ?`
+      // let [resultQty] = await conn.query(sql, [product_id])
+      // console.log('ini result qty', resultQty);
 
       sql = `select quantityCart,product_id from cart where id=?`;
       let [result] = await conn.query(sql, [cart_id]);
@@ -518,6 +521,7 @@ module.exports = {
         address,
         user_id: id,
         bank_id,
+        courier: "Grab - Same Day",
       };
       let [trans_id] = await conn.query(sql, insertTransaction);
       console.log("ini result trasn id", trans_id);
@@ -538,7 +542,7 @@ module.exports = {
           price: cart[i].hargaJual,
           quantity: cart[i].quantityCart,
           transaction_id: transactionId,
-          image: cart[i].images,
+          image: cart[i].images[0].image,
           hargaBeli: cart[i].hargaBeli,
           unit: cart[i].unit,
         };
@@ -620,25 +624,6 @@ module.exports = {
     } catch (error) {
       console.log(error);
       conn.release();
-      return res.status(500).send({ message: error.message || error });
-    }
-  },
-  getShippingCost: async (req, res) => {
-    let { CityId } = req.query;
-
-    try {
-      let res = await axios.post(
-        "https://api.rajaongkir.com/starter/cost",
-        { origin: "152", destination: CityId, weight: 1000, courier: "jne" },
-        {
-          headers: { key: "2aa8392bfd96d0b0af0f4f7db657cd8e" },
-        }
-      );
-      let ongkos = res.data.rajaongkir.result[0].cost[0].value;
-
-      return res.status(200).send(ongkos);
-    } catch (error) {
-      console.log(error);
       return res.status(500).send({ message: error.message || error });
     }
   },
@@ -754,6 +739,7 @@ module.exports = {
       return res.status(500).send({ message: error.message || error });
     }
   },
+
   getUserTransactionController: async (req, res) => {
     const { id } = req.user;
     const { order, filter, from_date, to_date, page, limit } = req.query;
@@ -806,6 +792,88 @@ module.exports = {
       return res.status(200).send(result.data);
     } catch (error) {
       console.log(error);
+      return res.status(500).send({ message: error.message || error });
+    }
+  },
+  getObat: async (req, res) => {
+    let conn, sql;
+    try {
+      conn = await dbCon.promise().getConnection();
+
+      sql = `select id, name, hargaJual, hargaBeli, 
+      (select sum(stock) from stock where product_id = product.id) as total_stock from product order by name`;
+      let [product] = await conn.query(sql);
+      sql = "select image from product_image where product_id=?";
+      for (let i = 0; i < product.length; i++) {
+        let [productImg] = await conn.query(sql, product[i].id);
+        let image = productImg[0].image;
+        product[i] = { ...product[i], image };
+      }
+      sql = "select stock from stock where product_id=?";
+      conn.release();
+      return res.status(200).send({ product });
+    } catch (error) {
+      conn.release();
+      return res.status(500).send({ message: error.message || error });
+    }
+  },
+  getPrescription: async (req, res) => {
+    // nanti id nya dapet dari klik di pesanan  baru -> buat salinan resep
+    const { transaction_id } = req.params;
+    let conn, sql;
+    try {
+      conn = await dbCon.promise().getConnection();
+      sql =
+        "select image, prescription_number, created_at from prescription where transaction_id=? ";
+      let [prescription] = await conn.query(sql, transaction_id);
+
+      conn.release();
+      return res.status(200).send(prescription);
+    } catch (error) {
+      conn.release();
+      return res.status(500).send({ message: error.message || error });
+    }
+  },
+  submitPrescription: async (req, res) => {
+    const data = req.body;
+    const { transaction_id } = req.params;
+
+    let conn, sql;
+    try {
+      conn = await dbCon.promise().getConnection();
+      sql = `insert into transaction_detail set ?`;
+      for (let i = 0; i < data.dataResep.length; i++) {
+        let insertData = {
+          transaction_id: transaction_id,
+          name: data.dataResep[i].name,
+          quantity: data.dataResep[i].quantity,
+          price: data.dataResep[i].hargaJual,
+          hargaBeli: data.dataResep[i].hargaBeli,
+          image: data.dataResep[i].image,
+          unit: data.dataResep[i].unit,
+          dosis: data.dataResep[i].dosis,
+        };
+        await conn.query(sql, insertData);
+      }
+
+      sql = "update prescription set ? where transaction_id = ?";
+      let insertPrescription = {
+        nama_dokter: data.nama_dokter,
+        nama_pasien: data.nama_pasien,
+        status: 2,
+      };
+      await conn.query(sql, [insertPrescription, transaction_id]);
+
+      sql = "update transaction set ? where id = ?";
+      let insertTransaction = {
+        status: 2,
+      };
+      await conn.query(sql, [insertTransaction, transaction_id]);
+
+      conn.release();
+      return res.status(200).send({ message: "Berhasil Upload Resep" });
+    } catch (error) {
+      conn.release();
       return res.status(500).send({ message: error.message || error });
     }
   },
