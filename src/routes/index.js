@@ -10,4 +10,5 @@ module.exports = {
   profileRoutes,
   transactionRoutes,
   prescriptionRoutes,
+  reportRoutes,
 };
