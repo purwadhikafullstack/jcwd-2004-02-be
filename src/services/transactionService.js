@@ -125,7 +125,11 @@ module.exports = {
       if (data[0].products.length) {
         let subtotal = 0;
         for (let id = 0; id < data[0]["products"].length; id++) {
-          subtotal += data[0].products[id].price;
+          let sub =
+            parseInt(data[0].products[id].price) *
+            parseInt(data[0].products[id].quantity);
+          data[0].products[id].total = sub;
+          subtotal += sub;
         }
         data[0].subtotal = subtotal;
       }

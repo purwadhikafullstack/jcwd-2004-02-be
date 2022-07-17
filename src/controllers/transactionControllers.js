@@ -521,6 +521,7 @@ module.exports = {
         address,
         user_id: id,
         bank_id,
+        courier: "Grab - Same Day",
       };
       let [trans_id] = await conn.query(sql, insertTransaction);
       console.log("ini result trasn id", trans_id);
@@ -541,9 +542,9 @@ module.exports = {
           price: cart[i].hargaJual,
           quantity: cart[i].quantityCart,
           transaction_id: transactionId,
-          image: cart[i].images,
+          image: cart[i].images[0].image,
           hargaBeli: cart[i].hargaBeli,
-          //unit
+          unit: cart[i].unit,
         };
         await conn.query(sql, insertTransactionDetail);
       }

@@ -43,6 +43,7 @@ module.exports = {
         transaction_number: "HLTM-" + nanoid(),
         address: result[0].address,
         user_id: id,
+        courier: "Grab - Same Day",
       };
 
       let [resultTrans] = await conn.query(sql, insertData);
