@@ -176,13 +176,6 @@ module.exports = {
       sql = `select year(updated_at) as tahun ,month(updated_at) as bulan, weekday(updated_at) as hari, sum(quantity*price) as jumlah from transaction_detail where year(updated_at)=2022 ${filter}`;
       let [pendapatan] = await conn.query(sql);
 
-      // avg
-      sql = `select year(updated_at) as tahun , ceiling(sum(quantity)/12) as average from transaction_detail where year(updated_at)=2022 `;
-      let [avgMonth] = await conn.query(sql);
-
-      sql = `select year(updated_at) as tahun , ceiling(sum(quantity)/12) as average from transaction_detail where year(updated_at)=2022 `;
-      let [avgWeek] = await conn.query(sql);
-
       conn.release();
       return res.status(200).send({
         pesananBaru,
@@ -192,7 +185,6 @@ module.exports = {
         dibatalkan,
         penjualan,
         pendapatan,
-        avgMonth,
       });
     } catch (error) {
       console.log(error);
@@ -255,6 +247,46 @@ module.exports = {
         pendapatan,
         avgMonth,
         avgWeek,
+      });
+    } catch (error) {
+      console.log(error);
+
+      conn.release();
+      return res.status(500).send({ message: error.message || error });
+    }
+  },
+  ringkasanProfitLoss: async (req, res) => {
+    let { filter, bulan, tahun } = req.query;
+    let conn, sql;
+
+    try {
+      conn = await dbCon.promise().getConnection();
+
+      // filter bulanan dan tahunan
+      if (filter == "yearly") {
+        filter = ``;
+      } else if (filter == "monthly" || !filter) {
+        filter = ` and month(transaction_detail.updated_at) = ${bulan} group by year(transaction_detail.updated_at),month(transaction_detail.updated_at)
+                   order by year(transaction_detail.updated_at),month(transaction_detail.updated_at)`;
+      }
+
+      if (tahun) {
+        tahun = `and year(transaction_detail.updated_at)=${tahun}`;
+      } else {
+        tahun = ``;
+      }
+
+      sql = `select transaction_detail.id, transaction_detail.updated_at, year(transaction_detail.updated_at) as tahun ,
+      month(transaction_detail.updated_at) as bulan, 
+      weekday(transaction_detail.updated_at) as hari, sum(transaction_detail.quantity*transaction_detail.price) as sum, 
+      transaction.status from transaction_detail 
+      inner join transaction on transaction_detail.transaction_id = transaction.id 
+      where true ${tahun} and transaction.status = 'selesai' ${filter}`;
+      let [penjualanBarang] = await conn.query(sql);
+
+      sql = conn.release();
+      return res.status(200).send({
+        penjualanBarang,
       });
     } catch (error) {
       console.log(error);
