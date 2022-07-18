@@ -1,5 +1,85 @@
 const { dbCon } = require("../connections");
 const fs = require("fs");
+const schedule = require("node-schedule");
+
+const rejectTransactionScheduledService = async () => {
+  let conn, sql;
+
+  try {
+    conn = await dbCon.promise().getConnection();
+
+    await conn.beginTransaction();
+
+    // check expired transaction
+    sql = `select * from transaction where expired_at <= current_timestamp() and status not in ('dibatalkan','diproses','dikirim','selesai')`;
+    let [transactionData] = await conn.query(sql);
+
+    if (transactionData.length) {
+      for (let i = 0; i < transactionData.length; i++) {
+        const element = transactionData[i];
+
+        // select stock per id
+        sql = `select id, stock_id, quantity from log where transaction_id = ?`;
+        let [selectedStock] = await conn.query(sql, element.id);
+
+        // restore the quantity back to stock
+        for (let id = 0; id < selectedStock.length; id++) {
+          sql = `select id, quantity from stock where id = ?`;
+          let [restoredStock] = await conn.query(
+            sql,
+            selectedStock[id].stock_id
+          );
+
+          let restoredValue =
+            Math.abs(parseInt(selectedStock[id].quantity)) +
+            parseInt(restoredStock[0].quantity);
+
+          let updateQuantityStock = { quantity: restoredValue };
+          sql = `update stock set ? where id = ?`;
+          await conn.query(sql, [
+            updateQuantityStock,
+            selectedStock[id].stock_id,
+          ]);
+
+          let insertDataLog = {
+            activity: "transaksi expired",
+            quantity: `+${Math.abs(parseInt(selectedStock[id].quantity))}`,
+            stock_id: selectedStock[id].stock_id,
+            transaction_id: element.id,
+            stock: restoredValue,
+          };
+
+          sql = `insert into log set ?`;
+          await conn.query(sql, insertDataLog);
+        }
+
+        sql = `update transaction set ? where id = ?`;
+        await conn.query(sql, [{ status: 6 }, element.id]);
+        console.log(`Ke update bos yang ini -${element.id}`);
+
+        //Update prescription status if exist
+        sql = `select * from prescription where transaction_id = ?`;
+        let [prescriptionExist] = await conn.query(sql, element.id);
+
+        if (prescriptionExist.length > 0) {
+          for (let k = 0; k < prescriptionExist.length; k++) {
+            sql = `update prescription set ? where transaction_id = ?`;
+            await conn.query(sql, [{ status: 2 }, element.id]);
+            console.log(`resep ke-${prescriptionExist[k].id} ke update jg bos`);
+          }
+        }
+      }
+    }
+
+    await conn.commit();
+    conn.release();
+    return { message: "Transaction successfully rejected by system" };
+  } catch (error) {
+    await conn.rollback();
+    conn.release();
+    throw new Error(error.message || error);
+  }
+};
 
 module.exports = {
   getUserTransactionService: async (
@@ -239,4 +319,57 @@ module.exports = {
       conn.release();
     }
   },
+  getProductLogService: async (product_id, limit, page) => {
+    let conn, sql;
+
+    if (!page) {
+      page = 0;
+    }
+
+    if (!limit) {
+      limit = 10;
+    }
+
+    let offset = page * parseInt(limit);
+
+    try {
+      conn = await dbCon.promise().getConnection();
+
+      await conn.beginTransaction();
+
+      // get data
+      sql = `select log.id, created_at, activity, updated_at, user_id, stock_id, transaction_id, product_id, expired, 
+      stock_exp, recipient_name, quantity from log
+      join (select id, name as recipient_name from users) as u on u.id = log.user_id
+      join (select id, product_id, stock as stock_exp, expired from stock) as s on s.id = log.stock_id where product_id = ? LIMIT ${dbCon.escape(
+        offset
+      )}, ${dbCon.escape(limit)}`;
+      let [data] = await conn.query(sql, product_id);
+
+      // total stock per product
+      sql = `select sum(stock) as total_stock  from stock where product_id = ?`;
+      let [totalStock] = await conn.query(sql, product_id);
+
+      // count total log data
+      sql = `select count(*) as total_log from (select log.id from log 
+        join (select id, product_id from stock) as s on log.stock_id = s.id where product_id = ?) as total_data`;
+      let [totalData] = await conn.query(sql, product_id);
+
+      sql = `select name from product where id = ?`;
+      let [name] = await conn.query(sql, product_id);
+
+      await conn.commit();
+      conn.release();
+      return { data, totalData, totalStock, name };
+    } catch (error) {
+      conn.rollback();
+      throw new Error(error.message || error);
+    } finally {
+      conn.release();
+    }
+  },
 };
+
+schedule.scheduleJob("*/5 * * * * *", () => {
+  rejectTransactionScheduledService();
+});

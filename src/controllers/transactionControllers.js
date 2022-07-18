@@ -6,6 +6,7 @@ const {
   getUserTransactionService,
   getDetailTransactionService,
   getAllTransactionService,
+  getProductLogService,
 } = require("../services/transactionService");
 
 module.exports = {
@@ -664,9 +665,9 @@ module.exports = {
           price: cart[i].hargaJual,
           quantity: cart[i].quantityCart,
           transaction_id: transactionId,
-          image: cart[i].images,
+          image: cart[i].images[0].image,
           hargaBeli: cart[i].hargaBeli,
-          //unit
+          unit: cart[i].unit,
         };
         await conn.query(sql, insertTransactionDetail);
       }
@@ -778,8 +779,24 @@ module.exports = {
         page,
         id
       );
-      res.set("x-total-transaction", result.totalData[0].total_data);
+      res.set("x-total-transaction", result.totalData[0].total_transaction);
       return res.status(200).send(result.data);
+    } catch (error) {
+      console.log(error);
+      return res.status(500).send({ message: error.message || error });
+    }
+  },
+  getProductLogController: async (req, res) => {
+    let { product_id } = req.params;
+
+    try {
+      const result = await getProductLogService(product_id);
+      res.set("x-total-count", result.totalData[0].total_log);
+      return res.status(200).send({
+        name: result.name[0].name,
+        total_stock: result.totalStock[0].total_stock,
+        data: result.data,
+      });
     } catch (error) {
       console.log(error);
       return res.status(500).send({ message: error.message || error });

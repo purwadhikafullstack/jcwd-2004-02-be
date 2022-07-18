@@ -22,6 +22,7 @@ const {
   acceptPayment,
   rejectPayment,
   getWaitingPaymentByTransactionId,
+  getProductLogController,
 } = transactionControllers;
 
 const { verifyTokenAccess, verifyTokenEmail } = require("../lib/verifyToken");
@@ -67,5 +68,6 @@ Router.get(
   verifyTokenAccess,
   getAllTransactionController
 );
+Router.get("/getproductlog/:product_id", getProductLogController);
 
 module.exports = Router;
