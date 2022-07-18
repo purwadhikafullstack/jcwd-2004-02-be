@@ -130,4 +130,75 @@ module.exports = {
       return res.status(500).send({ message: error.message || error });
     }
   },
+  ringkasanStatistik: async (req, res) => {
+    let { filter } = req.query;
+    let conn, sql;
+
+    try {
+      conn = await dbCon.promise().getConnection();
+
+      // filter mingguan dan bulanan
+      if (filter == "weekly") {
+        filter = `group by weekday(updated_at),month(updated_at)
+                  order by weekday(updated_at),month(updated_at); `;
+      } else if (filter == "monthly" || !filter) {
+        filter = ` group by year(updated_at),month(updated_at)
+                   order by year(updated_at),month(updated_at)`;
+      }
+
+      // statistik
+      // get pesanan baru
+      sql = `select year(updated_at) as tahun ,month(updated_at) as bulan, weekday(updated_at) as hari,  count(id) as pesanan_baru from transaction where status = 'menunggu pembayaran' and year(updated_at)=2022 ${filter}`;
+      let [pesananBaru] = await conn.query(sql);
+
+      // get siap dikirim
+      sql = `select year(updated_at) as tahun ,month(updated_at) as bulan, weekday(updated_at) as hari, count(id) as siap_dikirim from transaction where status = 'diproses' and year(updated_at)=2022 ${filter}`;
+      let [siapDikirim] = await conn.query(sql);
+
+      // get sedang dikirim
+      sql = `select year(updated_at) as tahun ,month(updated_at) as bulan, weekday(updated_at) as hari, count(id) as sedang_dikirim from transaction where status = 'dikirim' and year(updated_at)=2022 ${filter}`;
+      let [sedangDikirim] = await conn.query(sql);
+
+      // get selesai
+      sql = `select year(updated_at) as tahun ,month(updated_at) as bulan, weekday(updated_at) as hari, count(id) as selesai from transaction where status = 'selesai' and year(updated_at)=2022 ${filter}`;
+      let [selesai] = await conn.query(sql);
+
+      // get dibatalkan
+      sql = `select year(updated_at) as tahun ,month(updated_at) as bulan, weekday(updated_at) as hari, count(id) as dibatalkan from transaction where status = 'dibatalkan' and year(updated_at)=2022 ${filter}`;
+      let [dibatalkan] = await conn.query(sql);
+
+      // graph
+      // penjualan
+      sql = `select year(updated_at) as tahun ,month(updated_at) as bulan, weekday(updated_at) as hari, sum(quantity) as jumlah from transaction_detail where year(updated_at)=2022 ${filter}`;
+      let [penjualan] = await conn.query(sql);
+
+      // pendapatan
+      sql = `select year(updated_at) as tahun ,month(updated_at) as bulan, weekday(updated_at) as hari, sum(quantity*price) as jumlah from transaction_detail where year(updated_at)=2022 ${filter}`;
+      let [pendapatan] = await conn.query(sql);
+
+      // avg
+      sql = `select year(updated_at) as tahun , ceiling(sum(quantity)/12) as average from transaction_detail where year(updated_at)=2022 `;
+      let [avgMonth] = await conn.query(sql);
+
+      sql = `select year(updated_at) as tahun , ceiling(sum(quantity)/12) as average from transaction_detail where year(updated_at)=2022 `;
+      let [avgWeek] = await conn.query(sql);
+
+      conn.release();
+      return res.status(200).send({
+        pesananBaru,
+        siapDikirim,
+        sedangDikirim,
+        selesai,
+        dibatalkan,
+        penjualan,
+        pendapatan,
+        avgMonth,
+      });
+    } catch (error) {
+      console.log(error);
+
+      conn.release();
+      return res.status(500).send({ message: error.message || error });
+    }
+  },
 };
