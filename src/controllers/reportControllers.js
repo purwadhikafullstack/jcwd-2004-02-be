@@ -201,4 +201,66 @@ module.exports = {
       return res.status(500).send({ message: error.message || error });
     }
   },
+
+  ringkasanChart: async (req, res) => {
+    let { filter } = req.query;
+    let conn, sql;
+
+    try {
+      conn = await dbCon.promise().getConnection();
+
+      // filter mingguan dan bulanan
+      if (filter == "weekly") {
+        filter = `yearweek(transaction_detail.updated_at)= yearweek(now()) and transaction.status = 'selesai'
+                  group by weekday(transaction_detail.updated_at),month(transaction_detail.updated_at)
+                  order by weekday(transaction_detail.updated_at),month(transaction_detail.updated_at); `;
+      } else if (filter == "monthly" || !filter) {
+        filter = ` year(transaction_detail.updated_at)=2022 and  transaction.status = 'selesai'
+                   group by year(transaction_detail.updated_at),month(transaction_detail.updated_at)
+                   order by year(transaction_detail.updated_at),month(transaction_detail.updated_at)`;
+      }
+      // graph
+      // penjualan
+      sql = `select transaction_detail.id, transaction_detail.updated_at, year(transaction_detail.updated_at) as tahun, month(transaction_detail.updated_at) as bulan, weekday(transaction_detail.updated_at) as hari, sum(transaction_detail.quantity) as jumlah, transaction.status from transaction_detail inner join transaction on transaction_detail.transaction_id = transaction.id where ${filter}`;
+      let [penjualan] = await conn.query(sql);
+
+      // pendapatan
+      sql = `select transaction_detail.id, transaction_detail.updated_at, year(transaction_detail.updated_at) as tahun, month(transaction_detail.updated_at) as bulan, weekday(transaction_detail.updated_at) as hari, sum(transaction_detail.quantity*transaction_detail.price) as jumlah, transaction.status from transaction_detail inner join transaction on transaction_detail.transaction_id = transaction.id where ${filter}`;
+      let [pendapatan] = await conn.query(sql);
+
+      // avg bulanan
+      console.log(penjualan[1].jumlah, "pnjualan");
+      let jumlahBulanan = 0;
+      for (let i = 0; i < penjualan.length; i++) {
+        jumlahBulanan += parseInt(penjualan[i].jumlah);
+      }
+      console.log(jumlahBulanan, "jumlahBulanan");
+      let avgMonth = Math.round(jumlahBulanan / 12);
+
+      console.log(avgMonth, "avg");
+
+      // avg mingguan
+      let jumlahMingguan = 0;
+      for (let i = 0; i < penjualan.length; i++) {
+        jumlahMingguan += parseInt(penjualan[i].jumlah);
+      }
+      console.log(jumlahMingguan, "jumlahMingguan");
+      let avgWeek = Math.round(jumlahMingguan / 7);
+
+      console.log(avgWeek, "avg");
+
+      conn.release();
+      return res.status(200).send({
+        penjualan,
+        pendapatan,
+        avgMonth,
+        avgWeek,
+      });
+    } catch (error) {
+      console.log(error);
+
+      conn.release();
+      return res.status(500).send({ message: error.message || error });
+    }
+  },
 };
