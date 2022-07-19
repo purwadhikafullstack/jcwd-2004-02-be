@@ -3,7 +3,6 @@ const fs = require("fs");
 const { customAlphabet } = require("nanoid");
 const dayjs = require("dayjs");
 const nanoid = customAlphabet("123456789abcdef", 10);
-const dayjs = require("dayjs");
 const { default: axios } = require("axios");
 const {
   getUserTransactionService,
