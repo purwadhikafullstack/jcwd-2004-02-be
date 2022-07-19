@@ -1,5 +1,56 @@
 const { dbCon } = require("../connections");
 const fs = require("fs");
+const schedule = require("node-schedule");
+
+const deleteStockScheduledServices = async () => {
+  let conn, sql;
+
+  try {
+    conn = await dbCon.promise().getConnection();
+
+    await conn.beginTransaction();
+
+    sql = `select * from stock where expired = current_date() and stock > 0`;
+    let [expiredStock] = await conn.query(sql);
+
+    for (let i = 0; i < expiredStock.length; i++) {
+      const element = expiredStock[i];
+
+      // delete expired stock
+      sql = `update stock set ? where id = ?`;
+      let updateStock = {
+        stock: 0,
+      };
+
+      await conn.query(sql, [updateStock, element.id]);
+      console.log(`expired stock deleted id: ${element.id}`);
+
+      // insert into log
+      sql = `insert into log set ?`;
+      let insertLog = {
+        activity: "stock expired",
+        quantity: parseInt(element.stock) * -1,
+        stock_id: element.id,
+      };
+
+      await conn.query(sql, insertLog);
+      console.log(`log ditambahkan stock id: ${element.id}`);
+    }
+
+    await conn.commit();
+    conn.release();
+    return { message: "Deleted Automatically" };
+  } catch (error) {
+    console.log(error);
+    await conn.rollback();
+    conn.release();
+    throw new Error(error.message || error);
+  }
+};
+
+schedule.scheduleJob("*/5 * * * * *", () => {
+  deleteStockScheduledServices();
+});
 
 module.exports = {
   // getDaftarProduct
