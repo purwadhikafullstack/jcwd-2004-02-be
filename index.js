@@ -38,12 +38,15 @@ const { authRoutes } = require("./src/routes");
 const { profileRoutes } = require("./src/routes");
 const { prescriptionRoutes } = require("./src/routes");
 const { transactionRoutes } = require("./src/routes");
+const { reportRoutes } = require("./src/routes");
 
 app.use("/auth", authRoutes);
 app.use("/products", productRoutes);
 app.use("/profile", profileRoutes);
+app.use("/transaction", transactionRoutes);
 app.use("/prescription", prescriptionRoutes);
 app.use("/transaction", transactionRoutes);
+app.use("/report", reportRoutes);
 
 app.listen(PORT, () =>
   console.log(`Server in ${process.env.STATUS} mode, listening on ${PORT}`)
