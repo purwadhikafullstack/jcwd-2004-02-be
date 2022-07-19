@@ -4,5 +4,5 @@ module.exports.DateConverter = (date) => {
   month = month < 10 ? `0${month}` : month;
   let tanggal = convertedDate.getDate();
   let year = convertedDate.getFullYear();
-  return `${year}-${month}-${tanggal}`;
+  return `${year}${month}${tanggal}`;
 };
