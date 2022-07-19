@@ -284,9 +284,18 @@ module.exports = {
       where true ${tahun} and transaction.status = 'selesai' ${filter}`;
       let [penjualanBarang] = await conn.query(sql);
 
+      sql = `select transaction_detail.id, transaction_detail.updated_at, year(transaction_detail.updated_at) as tahun ,
+      month(transaction_detail.updated_at) as bulan, 
+      weekday(transaction_detail.updated_at) as hari, sum(transaction_detail.quantity*transaction_detail.price) as sum, 
+      transaction.status from transaction_detail 
+      inner join transaction on transaction_detail.transaction_id = transaction.id 
+      where true ${tahun} and transaction.status = 'selesai' ${filter}`;
+      let [hargaPokok] = await conn.query(sql);
+
       sql = conn.release();
       return res.status(200).send({
-        penjualanBarang,
+        penjualanBarang: penjualanBarang[0] || { sum: 0 },
+        hargaPokok: hargaPokok[0] || { sum: 0 },
       });
     } catch (error) {
       console.log(error);
