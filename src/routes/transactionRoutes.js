@@ -25,6 +25,8 @@ const {
   acceptPayment,
   rejectPayment,
   getWaitingPaymentByTransactionId,
+  getShippingCost,
+  getProductLogController,
 } = transactionControllers;
 
 const { verifyTokenAccess, verifyTokenEmail } = require("../lib/verifyToken");
@@ -52,6 +54,7 @@ Router.delete("/deleteCart/:cart_id", verifyTokenAccess, deleteCart);
 Router.get("/getBank", getBank);
 Router.put("/acceptPayment/:transaction_id", acceptPayment);
 Router.post("/rejectPayment/:transaction_id", verifyTokenAccess, rejectPayment);
+Router.get("/getShippingCost", getShippingCost);
 Router.get(
   "/waitingPayment/:transaction_id",
   verifyTokenAccess,
@@ -73,6 +76,7 @@ Router.get(
   verifyTokenAccess,
   getAllTransactionController
 );
+Router.get("/getproductlog/:product_id", getProductLogController);
 Router.get("/product", getObat);
 Router.get("/pic/:transaction_id", getPrescription);
 Router.put("/submit/:transaction_id", submitPrescription);

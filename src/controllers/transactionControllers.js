@@ -3,10 +3,13 @@ const fs = require("fs");
 const { customAlphabet } = require("nanoid");
 const dayjs = require("dayjs");
 const nanoid = customAlphabet("123456789abcdef", 10);
+const dayjs = require("dayjs");
+const { default: axios } = require("axios");
 const {
   getUserTransactionService,
   getDetailTransactionService,
   getAllTransactionService,
+  getProductLogService,
 } = require("../services/transactionService");
 const { DateConverter } = require("../lib/dateconverter");
 
@@ -156,11 +159,11 @@ module.exports = {
         resultCart[i].totalHarga = totalHarga;
       }
 
-      let sql_img = `select id, image from product_image where product_id = ?`;
+      let sql_img = `select id, image from product_image where product_id = ? limit 1`;
       for (let i = 0; i < resultCart.length; i++) {
         const element = resultCart[i];
         let [images] = await conn.query(sql_img, element.product_id);
-        resultCart[i].images = images;
+        resultCart[i].images = images[0] || null;
       }
       console.log("ini result cart ya", resultCart);
 
@@ -181,11 +184,9 @@ module.exports = {
     // let {product_id} = req.query
     let { cart_id } = req.params;
     let conn, sql;
+
     try {
       conn = await dbCon.promise().getConnection();
-      // sql = `select stock from stock where product_id = ?`
-      // let [resultQty] = await conn.query(sql, [product_id])
-      // console.log('ini result qty', resultQty);
 
       sql = `select quantityCart,product_id from cart where id=?`;
       let [result] = await conn.query(sql, [cart_id]);
@@ -459,6 +460,9 @@ module.exports = {
       let updateTransaction = {
         status: "menunggu konfirmasi",
         payment: imagePath,
+        expired_at: dayjs(new Date())
+          .add(1, "day")
+          .format("YYYY-MM-DD HH:mm:ss"),
       };
       await conn.query(sql, [updateTransaction, transaction_id]);
       // let transId = resultPay.insertId
@@ -524,7 +528,9 @@ module.exports = {
         address,
         user_id: id,
         bank_id,
-        courier: "Grab - Same Day",
+        expired_at: dayjs(new Date())
+          .add(1, "day")
+          .format("YYYY-MM-DD HH:mm:ss"),
       };
       let [trans_id] = await conn.query(sql, insertTransaction);
       console.log("ini result trasn id", trans_id);
@@ -545,7 +551,7 @@ module.exports = {
           price: cart[i].hargaJual,
           quantity: cart[i].quantityCart,
           transaction_id: transactionId,
-          image: cart[i].images[0].image,
+          image: cart[i].images.image,
           hargaBeli: cart[i].hargaBeli,
           unit: cart[i].unit,
         };
@@ -627,6 +633,25 @@ module.exports = {
     } catch (error) {
       console.log(error);
       conn.release();
+      return res.status(500).send({ message: error.message || error });
+    }
+  },
+  getShippingCost: async (req, res) => {
+    let { CityId } = req.query;
+
+    try {
+      let response = await axios.post(
+        "https://api.rajaongkir.com/starter/cost",
+        { origin: "152", destination: CityId, weight: 1000, courier: "jne" },
+        {
+          headers: { key: "2aa8392bfd96d0b0af0f4f7db657cd8e" },
+        }
+      );
+      let ongkos = response.data.rajaongkir.results[0].costs[0].cost[0].value;
+
+      return res.status(200).send({ ongkos });
+    } catch (error) {
+      console.log(error);
       return res.status(500).send({ message: error.message || error });
     }
   },
@@ -731,7 +756,8 @@ module.exports = {
         return res.status(200).send([]);
       }
 
-      sql = `select name, price,image, quantity from transaction_detail where transaction_id = ? `;
+      sql = `select name, price,image, quantity,unit, transaction.expired_at, transaction.created_at from transaction_detail join transaction on transaction.id = transaction_detail.transaction_id where transaction_id = ?`;
+
       let [getTransaction] = await conn.query(sql, transaction_id);
 
       conn.release();
@@ -778,7 +804,7 @@ module.exports = {
   },
   getAllTransactionController: async (req, res) => {
     const { id } = req.user;
-    let { sort, filter, search, from_date, to_date, limit, page } = req.query;
+    let { search, sort, filter, from_date, to_date, limit, page } = req.query;
 
     try {
       const result = await getAllTransactionService(
@@ -791,13 +817,31 @@ module.exports = {
         page,
         id
       );
-      res.set("x-total-transaction", result.totalData[0].total_data);
+      res.set("x-total-transaction", result.totalData[0].total_transaction);
       return res.status(200).send(result.data);
     } catch (error) {
       console.log(error);
       return res.status(500).send({ message: error.message || error });
     }
   },
+
+  getProductLogController: async (req, res) => {
+    let { product_id } = req.params;
+
+    try {
+      const result = await getProductLogService(product_id);
+      res.set("x-total-count", result.totalData[0].total_log);
+      return res.status(200).send({
+        name: result.name[0].name,
+        total_stock: result.totalStock[0].total_stock,
+        data: result.data,
+      });
+    } catch (error) {
+      console.log(error);
+      return res.status(500).send({ message: error.message || error });
+    }
+  },
+
   getObat: async (req, res) => {
     let conn, sql;
     try {
