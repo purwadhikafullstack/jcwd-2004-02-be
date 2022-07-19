@@ -117,18 +117,12 @@ module.exports = {
       filter = ``;
     }
 
-    // let range;
-    // if (from_date || to_date) {
-    //   range = `and created_at >= ${from_date} and created_at < ${to_date}`;
-    // } else {
-    //   range = `and created_at >= ${new Date(
-    //     new Date().setDate(new Date().getDate() - 7)
-    //   )
-    //     .toISOString()
-    //     .slice(0, 10)} and created_at < ${new Date()
-    //     .toISOString()
-    //     .slice(0, 10)}`;
-    // }
+    let transaction_date;
+    if (!from_date) {
+      transaction_date = ``;
+    } else {
+      transaction_date = `AND transaction.created_at between '${from_date}' AND '${to_date}'`;
+    }
 
     try {
       conn = await dbCon.promise().getConnection();
@@ -138,7 +132,7 @@ module.exports = {
       // get user's all transaction
       sql = `select transaction.id, status, expired_at, recipient, payment, courier, address, transaction_number, updated_at, created_at, prescription_number, pr_status, pr_image from transaction
             left join (select prescription_number, status as pr_status, image as pr_image, transaction_id from prescription) as prescription on transaction.id = prescription.transaction_id
-            where true ${filter} ${order} LIMIT ${dbCon.escape(
+            where true ${filter} ${order} ${transaction_date} LIMIT ${dbCon.escape(
         offset
       )}, ${dbCon.escape(limit)}`;
       let [data] = await conn.query(sql);
@@ -168,7 +162,7 @@ module.exports = {
       // count user's total transaction
       sql = `select count(*) as total_transaction from (select transaction.id, status, expired_at, recipient, payment, courier, address, transaction_number, updated_at, created_at, prescription_number from transaction
       left join (select prescription_number, transaction_id from prescription) as prescription on transaction.id = prescription.transaction_id
-      where true  ${filter} ${order}) as table_data`;
+      where true  ${filter} ${order} ${transaction_date} ) as table_data`;
       let [totalData] = await conn.query(sql);
 
       await conn.commit();

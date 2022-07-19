@@ -29,7 +29,7 @@ const deleteStockScheduledServices = async () => {
       sql = `insert into log set ?`;
       let insertLog = {
         activity: "stock expired",
-        quantity: parseInt(element.quantity) * -1,
+        quantity: parseInt(element.stock) * -1,
         stock_id: element.id,
       };
 
