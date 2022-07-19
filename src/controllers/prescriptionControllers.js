@@ -2,8 +2,8 @@ const { dbCon } = require("../connections");
 const fs = require("fs");
 const { customAlphabet } = require("nanoid");
 const nanoid = customAlphabet("1234567890ABCDEF", 4);
+const { DateConverter } = require("../lib/dateconverter");
 const nanoidPres = customAlphabet("1234567890", 5);
-
 module.exports = {
   // insert table transaction (status)
   // insert table prescription where id = transaction_id (foto, no resep, dll)
@@ -40,7 +40,8 @@ module.exports = {
       let insertData = {
         status: 1,
         recipient: result[0].firstname,
-        transaction_number: "HLTM-" + nanoid(),
+        transaction_number:
+          "HLTM-" + DateConverter(new Date()) + "-" + nanoid(),
         address: result[0].address,
         user_id: id,
         courier: "Grab - Same Day",
