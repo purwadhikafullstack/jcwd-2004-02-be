@@ -274,6 +274,7 @@ module.exports = {
         offset
       )}, ${dbCon.escape(limit)}`;
       let [data] = await conn.query(sql);
+      console.log();
 
       sql = `select id, name, image, quantity, price, unit from transaction_detail where transaction_id = ?`;
       for (let i = 0; i < data.length; i++) {

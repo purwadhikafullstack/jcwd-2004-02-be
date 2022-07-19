@@ -766,7 +766,7 @@ module.exports = {
   },
   getAllTransactionController: async (req, res) => {
     const { id } = req.user;
-    let { sort, filter, search, from_date, to_date, limit, page } = req.query;
+    let { search, sort, filter, from_date, to_date, limit, page } = req.query;
 
     try {
       const result = await getAllTransactionService(
