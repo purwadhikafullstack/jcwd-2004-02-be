@@ -1,6 +1,7 @@
 const { dbCon } = require("../connections");
 const fs = require("fs");
 const { customAlphabet } = require("nanoid");
+const dayjs = require("dayjs");
 const nanoid = customAlphabet("123456789abcdef", 10);
 const {
   getUserTransactionService,
@@ -869,6 +870,9 @@ module.exports = {
       sql = "update transaction set ? where id = ?";
       let insertTransaction = {
         status: 2,
+        expired_at: dayjs(new Date())
+          .add(1, "day")
+          .format("YYYY-MM-DD HH:mm:ss"),
       };
       await conn.query(sql, [insertTransaction, transaction_id]);
 
