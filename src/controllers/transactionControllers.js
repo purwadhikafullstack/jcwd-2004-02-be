@@ -2,6 +2,7 @@ const { dbCon } = require("../connections");
 const fs = require("fs");
 const { customAlphabet } = require("nanoid");
 const nanoid = customAlphabet("123456789abcdef", 10);
+const dayjs = require("dayjs");
 const { default: axios } = require("axios");
 const {
   getUserTransactionService,
@@ -455,6 +456,9 @@ module.exports = {
       let updateTransaction = {
         status: "menunggu konfirmasi",
         payment: imagePath,
+        expired_at: dayjs(new Date())
+          .add(1, "day")
+          .format("YYYY-MM-DD HH:mm:ss"),
       };
       await conn.query(sql, [updateTransaction, transaction_id]);
       // let transId = resultPay.insertId
@@ -519,6 +523,9 @@ module.exports = {
         address,
         user_id: id,
         bank_id,
+        expired_at: dayjs(new Date())
+          .add(1, "day")
+          .format("YYYY-MM-DD HH:mm:ss"),
       };
       let [trans_id] = await conn.query(sql, insertTransaction);
       console.log("ini result trasn id", trans_id);
@@ -539,7 +546,7 @@ module.exports = {
           price: cart[i].hargaJual,
           quantity: cart[i].quantityCart,
           transaction_id: transactionId,
-          image: cart[i].images,
+          image: cart[i].images.image,
           hargaBeli: cart[i].hargaBeli,
           unit: cart[i].unit,
         };
@@ -744,7 +751,8 @@ module.exports = {
         return res.status(200).send([]);
       }
 
-      sql = `select name, price,image, quantity from transaction_detail where transaction_id = ? `;
+      sql = `select name, price,image, quantity,unit, transaction.expired_at, transaction.created_at from transaction_detail join transaction on transaction.id = transaction_detail.transaction_id where transaction_id = ?`;
+
       let [getTransaction] = await conn.query(sql, transaction_id);
 
       conn.release();

@@ -9,8 +9,9 @@ module.exports = {
       conn = await dbCon.promise().getConnection();
 
       // get profit hari ini
-      sql = `select sum(price*quantity) as masuk, sum(hargaBeli*quantity) as keluar, sum(price*quantity)-sum(hargaBeli*quantity) as profit
-            from transaction_detail where DATE(updated_at) = CURDATE();`;
+      // sql = `select sum(price*quantity) as masuk, sum(hargaBeli*quantity) as keluar, sum(price*quantity)-sum(hargaBeli*quantity) as profit
+      //       from transaction_detail where DATE(updated_at) = CURDATE() and status = 'selesai'`;
+      sql = `select transaction_detail.id, transaction_detail.updated_at, year(transaction_detail.updated_at) as tahun, month(transaction_detail.updated_at) as bulan, weekday(transaction_detail.updated_at) as hari, sum(price*quantity) as masuk, sum(hargaBeli*quantity) as keluar, sum(price*quantity)-sum(hargaBeli*quantity) as profit, transaction.status from transaction_detail inner join transaction on transaction_detail.transaction_id = transaction.id where DATE(transaction_detail.updated_at) = CURDATE() and status='selesai'`;
       let [profit] = await conn.query(sql);
 
       //get pesanan hari ini
