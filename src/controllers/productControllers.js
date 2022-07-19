@@ -584,6 +584,7 @@ module.exports = {
       });
       console.log(product[0], "produk");
       conn.release();
+      await conn.commit();
       return res.status(200).send(product[0]);
     } catch (error) {
       conn.release();
@@ -788,6 +789,64 @@ module.exports = {
     } catch (error) {
       conn.rollback();
       conn.release();
+      console.log(error);
+      return res.status(500).send({ message: error.message || error });
+    }
+  },
+  // fetch semua expire dan stok pada id produk yang dipilih
+  getSelectedProductStock: async (req, res) => {
+    let { id } = req.params;
+    let conn, sql;
+    try {
+      conn = await dbCon.promise().getConnection();
+      sql = `select id, expired, stock from stock where product_id = ?`;
+      [stock] = await conn.query(sql, id);
+      console.log(stock, "stock");
+      await conn.commit();
+      return res.status(200).send(stock);
+    } catch (error) {
+      console.log(error);
+      return res.status(500).send({ message: error.message || error });
+    }
+  },
+  editProductsStock: async (req, res) => {
+    const data = req.body;
+    let { id } = req.params;
+    let conn, sql;
+    try {
+      conn = await dbCon.promise().getConnection();
+      sql = `select expired, stock from stock where id = ?`;
+      await conn.query(sql, id);
+
+      sql = `update stock set ? where id = ?`;
+      let editStock = {
+        expired: data.expired,
+        stock: data.stock,
+      };
+      await conn.query(sql, [editStock, id]);
+
+      await conn.commit();
+      return res.status(200).send({ message: "Berhasil Edit Stok" });
+    } catch (error) {
+      console.log(error);
+      return res.status(500).send({ message: error.message || error });
+    }
+  },
+  deleteProductsStock: async (req, res) => {
+    let { id } = req.params;
+    let conn, sql;
+    try {
+      conn = await dbCon.promise().getConnection();
+      sql = `select expired, stock from stock where id = ?`;
+      await conn.query(sql, id);
+
+      sql = `delete from stock where id = ?`;
+      await conn.query(sql, id);
+      await conn.query(sql, id);
+
+      await conn.commit();
+      return res.status(200).send({ message: "Berhasil Menghapus Obat" });
+    } catch (error) {
       console.log(error);
       return res.status(500).send({ message: error.message || error });
     }
