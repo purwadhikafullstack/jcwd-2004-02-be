@@ -9,7 +9,7 @@ module.exports = {
   productRoutes,
   authRoutes,
   profileRoutes,
-  prescriptionRoutes,
   transactionRoutes,
+  prescriptionRoutes,
   reportRoutes,
 };

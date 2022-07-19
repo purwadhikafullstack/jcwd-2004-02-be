@@ -41,3 +41,5 @@
   },
 
 ]
+
+{ "nama_pasien": "ali jaber iyok", "nama_dokter": "ali hambali", "dataResep": [{dosis: "3x1", hargaBeli: 10000, hargaJual: 15000, id: 2, image: "/products/PRODUCT1655704589085.jpg", "name": "Antangin", "quantity": 2, "unit": "strip"}]

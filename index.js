@@ -43,6 +43,7 @@ const { reportRoutes } = require("./src/routes");
 app.use("/auth", authRoutes);
 app.use("/products", productRoutes);
 app.use("/profile", profileRoutes);
+app.use("/transaction", transactionRoutes);
 app.use("/prescription", prescriptionRoutes);
 app.use("/transaction", transactionRoutes);
 app.use("/report", reportRoutes);

@@ -8,6 +8,7 @@ const {
   addToCartService,
   getProdukTerkaitService,
 } = require("../services/productService");
+const { beginTransaction } = require("../connections/mysqldb");
 
 module.exports = {
   getDaftarProductController: async (req, res) => {
@@ -74,10 +75,11 @@ module.exports = {
       sql = `select id, name from category`;
       let [category] = await conn.query(sql);
 
-      await conn.commit();
+      conn.release();
       return res.status(200).send(category);
     } catch (error) {
       console.log(error);
+      conn.release();
       return res.status(500).send({ message: error.message || error });
     }
   },
@@ -98,9 +100,10 @@ module.exports = {
       sql = `select id, name from type`;
       let [type] = await conn.query(sql);
 
-      await conn.commit();
+      conn.release();
       return res.status(200).send({ category, symptom, brand, type });
     } catch (error) {
+      conn.release();
       console.log(error);
       return res.status(500).send({ message: error.message || error });
     }
@@ -133,6 +136,7 @@ module.exports = {
     let conn, sql;
     try {
       conn = await dbCon.promise().getConnection();
+      await conn.beginTransaction();
       sql = `insert into product set ?`;
       let insertData = {
         name: data.name,
@@ -198,8 +202,11 @@ module.exports = {
 
       await conn.query(sql, insertLog);
       await conn.commit();
+      conn.release();
       return res.status(200).send({ message: "Berhasil Upload Obat" });
     } catch (error) {
+      conn.rollback;
+      conn.release();
       console.log(error);
       return res.status(500).send({ message: error.message || error });
     }
@@ -491,6 +498,7 @@ module.exports = {
       const result = await getDetailProductService(product_id);
       return res.status(200).send(result.data);
     } catch (error) {
+      conn.release();
       return res.status(500).send({ message: error.message || error });
     }
   },
@@ -504,6 +512,7 @@ module.exports = {
         .status(200)
         .send({ result, message: "Produk berhasil ditambahkan ke cart" });
     } catch (error) {
+      conn.release();
       return res.status(500).send({ message: error.message || error });
     }
   },
@@ -532,10 +541,10 @@ module.exports = {
       await conn.query(sql, id);
 
       conn.release();
-
       return res.status(200).send({ message: "Berhasil Menghapus Obat" });
     } catch (error) {
       console.log(error);
+      conn.release();
       return res.status(500).send({ message: error.message || error });
     }
   },
@@ -574,9 +583,10 @@ module.exports = {
         return symptom;
       });
       console.log(product[0], "produk");
-      await conn.commit();
+      conn.release();
       return res.status(200).send(product[0]);
     } catch (error) {
+      conn.release();
       console.log(error);
       return res.status(500).send({ message: error.message || error });
     }
@@ -589,9 +599,10 @@ module.exports = {
       sql = `select id, image, product_id from product_image where product_id = ?`;
       let [product] = await conn.query(sql, id);
 
-      await conn.commit();
+      conn.release();
       return res.status(200).send(product);
     } catch (error) {
+      conn.release();
       console.log(error);
       return res.status(500).send({ message: error.message || error });
     }
@@ -605,10 +616,11 @@ module.exports = {
       sql = `select id, expired, stock from stock where product_id = ? and stock > 0  order by expired `;
       [stock] = await conn.query(sql, id);
       console.log(stock, "stock");
-      await conn.commit();
+      conn.release();
       return res.status(200).send(stock);
     } catch (error) {
       console.log(error);
+      conn.release();
       return res.status(500).send({ message: error.message || error });
     }
   },
@@ -620,10 +632,11 @@ module.exports = {
       sql = `select expired, stock from stock where id = ?`;
       [stock] = await conn.query(sql, id);
       console.log(stock, "stock");
-      await conn.commit();
+      conn.release();
       return res.status(200).send(stock[0]);
     } catch (error) {
       console.log(error);
+      conn.release();
       return res.status(500).send({ message: error.message || error });
     }
   },
