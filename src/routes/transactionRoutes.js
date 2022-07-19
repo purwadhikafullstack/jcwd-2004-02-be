@@ -22,6 +22,7 @@ const {
   acceptPayment,
   rejectPayment,
   getWaitingPaymentByTransactionId,
+  getShippingCost,
 } = transactionControllers;
 
 const { verifyTokenAccess, verifyTokenEmail } = require("../lib/verifyToken");
@@ -47,6 +48,7 @@ Router.put("/uploadPayment", verifyTokenAccess, uploader, uploadPayment);
 Router.get("/getBank", getBank);
 Router.put("/acceptPayment/:transaction_id", acceptPayment);
 Router.post("/rejectPayment/:transaction_id", verifyTokenAccess, rejectPayment);
+Router.get("/getShippingCost", getShippingCost);
 Router.get(
   "/waitingPayment/:transaction_id",
   verifyTokenAccess,

@@ -80,20 +80,32 @@ module.exports = {
     try {
       conn = await dbCon.promise().getConnection();
 
+      // if (filter == "weekly") {
+      //   filter = `group by weekday(updated_at),month(updated_at)
+      //             order by weekday(updated_at),month(updated_at); `;
+      // } else if (filter == "monthly" || !filter) {
+      //   filter = ` group by year(updated_at),month(updated_at)
+      //              order by year(updated_at),month(updated_at)`;
+      // }
       if (filter == "weekly") {
-        filter = `group by weekday(updated_at),month(updated_at)
-                  order by weekday(updated_at),month(updated_at); `;
+        filter = `yearweek(transaction_detail.updated_at)= yearweek(now()) and transaction.status = 'selesai'
+                  group by weekday(transaction_detail.updated_at),month(transaction_detail.updated_at)
+                  order by weekday(transaction_detail.updated_at),month(transaction_detail.updated_at); `;
       } else if (filter == "monthly" || !filter) {
-        filter = ` group by year(updated_at),month(updated_at)
-                   order by year(updated_at),month(updated_at)`;
+        filter = ` year(transaction_detail.updated_at)=2022 and  transaction.status = 'selesai'
+                   group by year(transaction_detail.updated_at),month(transaction_detail.updated_at)
+                   order by year(transaction_detail.updated_at),month(transaction_detail.updated_at)`;
       }
+
+      sql = `select transaction_detail.id, transaction_detail.updated_at, year(transaction_detail.updated_at) as tahun, month(transaction_detail.updated_at) as bulan, weekday(transaction_detail.updated_at) as hari, sum(transaction_detail.quantity) as jumlah, transaction.status from transaction_detail inner join transaction on transaction_detail.transaction_id = transaction.id where ${filter}`;
+      let [penjualanObat] = await conn.query(sql);
 
       // chart penjualan obat
 
-      sql = `select year(updated_at) as tahun ,month(updated_at) as bulan,weekday(updated_at) as hari,sum(quantity) as jumlah_penjualan
-        from transaction_detail where year(updated_at)=2022 ${filter} `;
+      // sql = `select year(updated_at) as tahun ,month(updated_at) as bulan,weekday(updated_at) as hari,sum(quantity) as jumlah_penjualan
+      //   from transaction_detail where year(updated_at)=2022 ${filter} `;
 
-      let [penjualanObat] = await conn.query(sql);
+      // let [penjualanObat] = await conn.query(sql);
 
       conn.release();
       return res.status(200).send(penjualanObat);
@@ -110,19 +122,32 @@ module.exports = {
     try {
       conn = await dbCon.promise().getConnection();
 
+      // if (filter == "weekly") {
+      //   filter = `group by weekday(updated_at),month(updated_at)
+      //             order by weekday(updated_at),month(updated_at); `;
+      // } else if (filter == "monthly" || !filter) {
+      //   filter = ` group by year(updated_at),month(updated_at)
+      //              order by year(updated_at),month(updated_at)`;
+      // }
+
       if (filter == "weekly") {
-        filter = `group by weekday(updated_at),month(updated_at)
-                  order by weekday(updated_at),month(updated_at); `;
+        filter = `yearweek(transaction_detail.updated_at)= yearweek(now()) and transaction.status = 'selesai'
+                  group by weekday(transaction_detail.updated_at),month(transaction_detail.updated_at)
+                  order by weekday(transaction_detail.updated_at),month(transaction_detail.updated_at); `;
       } else if (filter == "monthly" || !filter) {
-        filter = ` group by year(updated_at),month(updated_at)
-                   order by year(updated_at),month(updated_at)`;
+        filter = ` year(transaction_detail.updated_at)=2022 and  transaction.status = 'selesai'
+                   group by year(transaction_detail.updated_at),month(transaction_detail.updated_at)
+                   order by year(transaction_detail.updated_at),month(transaction_detail.updated_at)`;
       }
+
+      sql = `select transaction_detail.id, transaction_detail.updated_at, year(transaction_detail.updated_at) as tahun, month(transaction_detail.updated_at) as bulan, weekday(transaction_detail.updated_at) as hari, sum(price*quantity) as masuk, sum(hargaBeli*quantity) as keluar, sum(price*quantity)-sum(hargaBeli*quantity) as profit, transaction.status from transaction_detail inner join transaction on transaction_detail.transaction_id = transaction.id where ${filter}`;
+      let [profit] = await conn.query(sql);
 
       // chart profit
 
-      sql = `select year(updated_at) as tahun ,month(updated_at) as bulan,weekday(updated_at) as hari, sum(price*quantity) as masuk, sum(hargaBeli*quantity) as keluar, sum(price*quantity)-sum(hargaBeli*quantity) as profit
-            from transaction_detail where year(updated_at)=2022 ${filter}`;
-      let [profit] = await conn.query(sql);
+      // sql = `select year(updated_at) as tahun ,month(updated_at) as bulan,weekday(updated_at) as hari, sum(price*quantity) as masuk, sum(hargaBeli*quantity) as keluar, sum(price*quantity)-sum(hargaBeli*quantity) as profit
+      //       from transaction_detail where year(updated_at)=2022 ${filter}`;
+      // let [profit] = await conn.query(sql);
 
       conn.release();
       return res.status(200).send(profit);
