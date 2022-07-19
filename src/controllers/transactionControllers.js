@@ -7,6 +7,7 @@ const {
   getDetailTransactionService,
   getAllTransactionService,
 } = require("../services/transactionService");
+const { DateConverter } = require("../lib/dateconverter");
 
 module.exports = {
   addToCart: async (req, res) => {
@@ -517,7 +518,8 @@ module.exports = {
       let insertTransaction = {
         status: "menunggu pembayaran",
         recipient,
-        transaction_number: nanoid(),
+        transaction_number:
+          "HLTM-" + DateConverter(new Date()) + "-" + nanoid(),
         address,
         user_id: id,
         bank_id,
