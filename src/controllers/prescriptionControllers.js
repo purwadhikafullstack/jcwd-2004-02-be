@@ -1,13 +1,12 @@
 const { dbCon } = require("../connections");
 const fs = require("fs");
-// const { nanoid } = require("nanoid");
 const { customAlphabet } = require("nanoid");
-const nanoid = customAlphabet("1234567890abcdef", 10);
+const dayjs = require("dayjs");
+const nanoid = customAlphabet("1234567890ABCDEF", 4);
+const { DateConverter } = require("../lib/dateconverter");
+const nanoidPres = customAlphabet("1234567890", 5);
 
 module.exports = {
-  // insert table transaction (status)
-  // insert table prescription where id = transaction_id (foto, no resep, dll)
-
   addPrescriptionPic: async (req, res) => {
     console.log(req.files);
     let path = "/prescription";
@@ -25,20 +24,11 @@ module.exports = {
     let conn, sql;
     try {
       conn = await dbCon.promise().getConnection();
-      // get data untuk hapus imagepath foto lama
-      // sql = "select * from prescription where id =?";
-      // let [result] = await conn.query(sql, [id]);
-      // // masuk sini kalo gaada usernya
-      // console.log(result);
-      // if (!result.length) {
-      //   throw { message: "user tidak ditemukan" };
-      // }
-
       sql =
-        " SELECT transaction.user_id, transaction.id, transaction.status, transaction.recipient, transaction.transaction_number, transaction.address, address.address, address.firstname  FROM transaction LEFT JOIN address ON transaction.user_id = address.user_id";
-      let [resultjoin] = await conn.query(sql, [id]);
+        " select transaction.user_id, transaction.id, transaction.status, transaction.recipient, transaction.transaction_number, transaction.address, address.address, address.firstname  FROM transaction LEFT JOIN address ON transaction.user_id = address.user_id";
+      await conn.query(sql, [id]);
       // masuk sini kalo gaada usernya
-      // console.log(resultjoin);
+
       sql = "select * from address where user_id =?";
       let [result] = await conn.query(sql, [id]);
       // masuk sini kalo gaada usernya
@@ -49,9 +39,14 @@ module.exports = {
       let insertData = {
         status: 1,
         recipient: result[0].firstname,
-        transaction_number: nanoid(),
+        transaction_number:
+          "HLTM-" + DateConverter(new Date()) + "-" + nanoid(),
         address: result[0].address,
         user_id: id,
+        courier: "Grab - Same Day",
+        expired_at: dayjs(new Date())
+          .add(1, "day")
+          .format("YYYY-MM-DD HH:mm:ss"),
       };
 
       let [resultTrans] = await conn.query(sql, insertData);
@@ -64,20 +59,16 @@ module.exports = {
       let insertDataImage = {
         image: imagepath,
         transaction_id: transId,
-        prescription_number: nanoid(),
+        prescription_number: "PR-" + nanoidPres(),
         status: 1,
         user_id: id,
       };
+      if (insertDataImage.length) {
+        throw { message: "File ini melebihi 2MB atau format tidak sesuai!" };
+      }
       console.log(insertDataImage, "idi");
       await conn.query(sql, insertDataImage);
 
-      // sql = "insert into prescription set ?";
-      // let update = {
-      //   image: imagepath,
-      //   prescription_number: 1,
-      // };
-      // await conn.query(sql, [update, id]);
-      // kalo lewat sini berarti berhasil
       console.log("berhasil tambah");
 
       conn.release();

@@ -1,5 +1,56 @@
 const { dbCon } = require("../connections");
 const fs = require("fs");
+const schedule = require("node-schedule");
+
+const deleteStockScheduledServices = async () => {
+  let conn, sql;
+
+  try {
+    conn = await dbCon.promise().getConnection();
+
+    await conn.beginTransaction();
+
+    sql = `select * from stock where expired = current_date() and stock > 0`;
+    let [expiredStock] = await conn.query(sql);
+
+    for (let i = 0; i < expiredStock.length; i++) {
+      const element = expiredStock[i];
+
+      // delete expired stock
+      sql = `update stock set ? where id = ?`;
+      let updateStock = {
+        stock: 0,
+      };
+
+      await conn.query(sql, [updateStock, element.id]);
+      console.log(`expired stock deleted id: ${element.id}`);
+
+      // insert into log
+      sql = `insert into log set ?`;
+      let insertLog = {
+        activity: "stock expired",
+        quantity: parseInt(element.stock) * -1,
+        stock_id: element.id,
+      };
+
+      await conn.query(sql, insertLog);
+      console.log(`log ditambahkan stock id: ${element.id}`);
+    }
+
+    await conn.commit();
+    conn.release();
+    return { message: "Deleted Automatically" };
+  } catch (error) {
+    console.log(error);
+    await conn.rollback();
+    conn.release();
+    throw new Error(error.message || error);
+  }
+};
+
+schedule.scheduleJob("*/5 * * * * *", () => {
+  deleteStockScheduledServices();
+});
 
 module.exports = {
   // getDaftarProduct
@@ -109,7 +160,7 @@ module.exports = {
       conn = await dbCon.promise().getConnection();
       await conn.beginTransaction();
 
-      sql = `select id, quantity from cart where user_id = ? and product_id = ?`;
+      sql = `select id, quantityCart from cart where user_id = ? and product_id = ?`;
       let [selectedProduct] = await conn.query(sql, [id, product_id]);
 
       let result;
@@ -117,19 +168,20 @@ module.exports = {
         let cart_id = selectedProduct[0].id;
         let current_quantity = parseInt(selectedProduct[0].quantity);
         quantity = current_quantity + quantity;
-        sql = `update cart set quantity = ? where id = ?`;
+        sql = `update cart set quantityCart = ? where id = ?`;
         [result] = await conn.query(sql, [quantity, cart_id]);
       } else {
         sql = `insert into cart set ?`;
         const product_data = {
           user_id: id,
           product_id,
-          quantity,
+          quantityCart: quantity,
         };
         [result] = await conn.query(sql, product_data);
       }
 
       conn.commit();
+      conn.release();
       return result[0];
     } catch (error) {
       console.log(error);
