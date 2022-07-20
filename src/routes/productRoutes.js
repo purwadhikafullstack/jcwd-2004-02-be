@@ -43,6 +43,7 @@ Router.get("/getusercategoryselected/:category_id", getUserCategorySelected);
 Router.get("/getdetailproduct/:product_id", getDetailProductController);
 Router.post("/addtocart", verifyTokenAccess, addToCartController);
 Router.get("/getprodukterkait", getProdukTerkaitController);
+
 Router.put("/:id", uploader, verifyTokenAccess, editProducts);
 Router.post("/pic", uploader, editProductsPicture);
 Router.delete("/pic/:id", deleteProductsPicture);
@@ -57,5 +58,6 @@ Router.delete(
 );
 Router.put("/stock/edit/:stock_id", verifyTokenAccess, editProductsStock);
 Router.post("/stock/add/:product_id", verifyTokenAccess, addProductsStock);
+
 
 module.exports = Router;

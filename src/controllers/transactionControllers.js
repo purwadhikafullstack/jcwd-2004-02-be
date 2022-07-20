@@ -1,8 +1,8 @@
 const { dbCon } = require("../connections");
 const fs = require("fs");
 const { customAlphabet } = require("nanoid");
-const nanoid = customAlphabet("123456789abcdef", 10);
 const dayjs = require("dayjs");
+const nanoid = customAlphabet("123456789abcdef", 10);
 const { default: axios } = require("axios");
 const {
   getUserTransactionService,
@@ -10,6 +10,7 @@ const {
   getAllTransactionService,
   getProductLogService,
 } = require("../services/transactionService");
+const { DateConverter } = require("../lib/dateconverter");
 
 module.exports = {
   addToCart: async (req, res) => {
@@ -521,7 +522,8 @@ module.exports = {
       let insertTransaction = {
         status: "menunggu pembayaran",
         recipient,
-        transaction_number: nanoid(),
+        transaction_number:
+          "HLTM-" + DateConverter(new Date()) + "-" + nanoid(),
         address,
         user_id: id,
         bank_id,
@@ -911,6 +913,9 @@ module.exports = {
       sql = "update transaction set ? where id = ?";
       let insertTransaction = {
         status: 2,
+        expired_at: dayjs(new Date())
+          .add(1, "day")
+          .format("YYYY-MM-DD HH:mm:ss"),
       };
       await conn.query(sql, [insertTransaction, transaction_id]);
 
