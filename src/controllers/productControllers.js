@@ -33,7 +33,6 @@ module.exports = {
     let conn, sql;
     try {
       conn = await dbCon.promise().getConnection();
-      await conn.beginTransaction();
 
       // get last tabel product & category & stock
       sql = `select product.id, name, hargaJual, hargaBeli, unit, no_obat, no_BPOM,
@@ -55,12 +54,10 @@ module.exports = {
       sql = `select count(*) as total_data from product`;
       let [totalData] = await conn.query(sql);
 
-      await conn.commit();
       conn.release();
       res.set("x-total-product", totalData[0].total_data);
       return res.status(200).send(result);
     } catch (error) {
-      await conn.rollback();
       conn.release();
       return res.status(500).send({ message: error.message || error });
     }
@@ -421,8 +418,6 @@ module.exports = {
     try {
       conn = await dbCon.promise().getConnection();
 
-      await conn.beginTransaction();
-
       sql = `select product.id, name, hargaJual, unit, no_obat, no_BPOM, type_name, brand_name, category_name, symptom_name, symptom_id,
       (select sum(stock) from stock where product_id = product.id) as total_stock from product
       inner join (select name as type_name, id from type) as type on product.type_id = type.id
@@ -464,12 +459,10 @@ module.exports = {
 
       let [totalData] = await conn.query(sql);
 
-      await conn.commit();
       conn.release();
       res.set("x-total-product", totalData[0].total_data);
       return res.status(200).send(result);
     } catch (error) {
-      await conn.rollback();
       conn.release();
       return res.status(500).send({ message: error.message || error });
     }

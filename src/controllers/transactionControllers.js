@@ -143,8 +143,6 @@ module.exports = {
     try {
       conn = await dbCon.promise().getConnection();
 
-      await conn.beginTransaction();
-
       // sql = `select cart.id, product_id, user_id, quantityCart, created_at, updated_at, product_name, hargaJual, unit
       // (select sum(stock) from stock where product_id = cart.product_id) as total_stock from cart
       // join (select name as product_name, id, hargaJual, unit from product) as product on cart.product_id = product.id
@@ -176,12 +174,10 @@ module.exports = {
       // let [resultQty] = await conn.query(sql, [product_id])
       // console.log('ini result qty', resultQty);
 
-      await conn.commit();
       conn.release();
       return res.status(200).send(resultCart);
     } catch (error) {
       console.log(error);
-      await conn.rollback();
       conn.release();
       return res.status(500).send({ message: error.message || error });
     }
@@ -868,7 +864,6 @@ module.exports = {
     let conn, sql;
     try {
       conn = await dbCon.promise().getConnection();
-      await conn.beginTransaction();
 
       sql = `select id, name, hargaJual, hargaBeli, 
       (select sum(stock) from stock where product_id = product.id) as total_stock from product order by name`;
@@ -879,13 +874,11 @@ module.exports = {
         let image = productImg[0].image;
         product[i] = { ...product[i], image };
       }
-      sql = "select stock from stock where product_id=?";
+      // sql = "select stock from stock where product_id=?";
 
-      await conn.commit();
       conn.release();
       return res.status(200).send({ product });
     } catch (error) {
-      await conn.rollback();
       conn.release();
       return res.status(500).send({ message: error.message || error });
     }

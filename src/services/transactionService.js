@@ -127,8 +127,6 @@ module.exports = {
     try {
       conn = await dbCon.promise().getConnection();
 
-      await conn.beginTransaction();
-
       // get user's all transaction
       sql = `select transaction.id, status, expired_at, recipient, payment, courier, address, transaction_number, updated_at, created_at, prescription_number, pr_status, pr_image from transaction
             left join (select prescription_number, status as pr_status, image as pr_image, transaction_id from prescription) as prescription on transaction.id = prescription.transaction_id
@@ -165,10 +163,8 @@ module.exports = {
       where true  ${filter} ${transaction_date} ${order}) as table_data`;
       let [totalData] = await conn.query(sql);
 
-      await conn.commit();
       return { data, totalData };
     } catch (error) {
-      await conn.rollback();
       throw new Error(error.message || error);
     } finally {
       conn.release();
@@ -179,8 +175,6 @@ module.exports = {
 
     try {
       conn = await dbCon.promise().getConnection();
-
-      await conn.beginTransaction();
 
       // get user's transaction
       sql = `select transaction.id, status, created_at, expired_at, recipient, payment, courier, address, transaction_number, updated_at, prescription_number, pr_image, pr_status from transaction
@@ -207,10 +201,8 @@ module.exports = {
         data[0].subtotal = subtotal;
       }
 
-      await conn.commit();
       return { data };
     } catch (error) {
-      await conn.rollback();
       throw new Error(error.message || error);
     } finally {
       conn.release();
@@ -268,8 +260,6 @@ module.exports = {
     try {
       conn = await dbCon.promise().getConnection();
 
-      await conn.beginTransaction();
-
       // get user's all transaction
       sql = `select transaction.id, status, expired_at, recipient, payment, courier, address, transaction_number, updated_at, created_at, prescription_number, pr_status, pr_image from transaction
             left join (select prescription_number, status as pr_status, image as pr_image, transaction_id from prescription) as prescription on transaction.id = prescription.transaction_id
@@ -306,10 +296,8 @@ module.exports = {
       where true ${search} ${filter} ${transaction_date} ${sort}) as table_data`;
       let [totalData] = await conn.query(sql);
 
-      await conn.commit();
       return { data, totalData };
     } catch (error) {
-      await conn.rollback();
       throw new Error(error.message || error);
     } finally {
       conn.release();
