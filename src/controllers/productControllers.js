@@ -1,12 +1,14 @@
 const { dbCon } = require("../connections");
 const db = require("../connections/mysqldb");
 const { json } = require("body-parser");
+const fs = require("fs");
 const {
   getDaftarProductService,
   getDetailProductService,
   addToCartService,
   getProdukTerkaitService,
 } = require("../services/productService");
+const { beginTransaction } = require("../connections/mysqldb");
 
 module.exports = {
   getDaftarProductController: async (req, res) => {
@@ -73,10 +75,11 @@ module.exports = {
       sql = `select id, name from category`;
       let [category] = await conn.query(sql);
 
-      await conn.commit();
+      conn.release();
       return res.status(200).send(category);
     } catch (error) {
       console.log(error);
+      conn.release();
       return res.status(500).send({ message: error.message || error });
     }
   },
@@ -84,7 +87,7 @@ module.exports = {
   getComponentObat: async (req, res) => {
     let conn, sql;
     try {
-      conn = dbCon.promise();
+      conn = await dbCon.promise().getConnection();
       sql = `select id, name from category`;
       let [category] = await conn.query(sql);
 
@@ -97,8 +100,10 @@ module.exports = {
       sql = `select id, name from type`;
       let [type] = await conn.query(sql);
 
+      conn.release();
       return res.status(200).send({ category, symptom, brand, type });
     } catch (error) {
+      conn.release();
       console.log(error);
       return res.status(500).send({ message: error.message || error });
     }
@@ -130,7 +135,8 @@ module.exports = {
 
     let conn, sql;
     try {
-      conn = dbCon.promise();
+      conn = await dbCon.promise().getConnection();
+      await conn.beginTransaction();
       sql = `insert into product set ?`;
       let insertData = {
         name: data.name,
@@ -162,8 +168,8 @@ module.exports = {
         expired: data.expired,
         product_id: prodId,
       };
-      await conn.query(sql, insertDataStock);
-
+      let [resultStock] = await conn.query(sql, insertDataStock);
+      let stockId = resultStock.insertId;
       sql = `insert into symptom_product set ?`;
       for (let i = 0; i < data.symptom.length; i++) {
         let insertDataSymptom = {
@@ -182,8 +188,25 @@ module.exports = {
         await conn.query(sql, insertDataCategory);
       }
 
+      sql = `select stock from stock where id=? `;
+      let [sumStock] = await conn.query(sql, stockId);
+
+      sql = `insert into log set ?`;
+      let insertLog = {
+        activity: "Menambah Produk",
+        quantity: data.stock,
+        stock_id: stockId,
+        user_id: id,
+        stock: sumStock[0].stock,
+      };
+
+      await conn.query(sql, insertLog);
+      await conn.commit();
+      conn.release();
       return res.status(200).send({ message: "Berhasil Upload Obat" });
     } catch (error) {
+      conn.rollback;
+      conn.release();
       console.log(error);
       return res.status(500).send({ message: error.message || error });
     }
@@ -191,12 +214,13 @@ module.exports = {
   editProducts: async (req, res) => {
     console.log(req.body, "ini req body");
 
-    const data = JSON.parse(req.body.data);
+    const data = req.body;
     const { id } = req.params;
 
     let conn, sql;
     try {
-      conn = dbCon.promise();
+      conn = await dbCon.promise().getConnection();
+      await conn.beginTransaction();
 
       // get ID
       // name, description, warning, usage, brand_id, type_id, no_BPOM, no_obat
@@ -218,6 +242,10 @@ module.exports = {
 
         brand_id: data.brand_id,
         type_id: data.type_id,
+
+        unit: data.unit,
+        hargaJual: data.hargaJual,
+        hargaBeli: data.hargaBeli,
       };
       await conn.query(sql, [editDataProducts, id]);
       // if (!editData.length) {
@@ -245,10 +273,13 @@ module.exports = {
         };
         await conn.query(sql, insertDataCategory);
       }
-
+      await conn.commit();
+      conn.release();
       return res.status(200).send({ message: "Berhasil Update Obat" });
     } catch (error) {
       console.log(error);
+      conn.rollback();
+      conn.release();
       return res.status(500).send({ message: error.message || error });
     }
   },
@@ -258,57 +289,61 @@ module.exports = {
 
     const { products } = req.files;
     console.log("files", req.files);
-    const { id } = req.params;
+
+    const product_id = JSON.parse(req.body.data);
 
     // looping filename
-    const imagePaths = products
-      ? products.map((val) => {
-          return `${path}/${val.filename}`;
-        })
-      : [];
+    const imagePath = products ? `${path}/${products[0].filename}` : null;
 
     // Proteksi tidak ada foto
-    if (!imagePaths.length) {
+    if (!imagePath) {
       return res.status(500).send({ message: "Foto tidak ada" });
     }
 
-    console.log(products);
+    let conn, sql;
+    try {
+      conn = dbCon.promise();
+      // insert foto
+      sql = `insert into product_image set ?`;
+      let insertImage = { image: imagePath, product_id };
+      await conn.query(sql, [insertImage]);
+
+      return res.status(200).send({ message: "Berhasil Update Foto Obat" });
+    } catch (error) {
+      console.log(error);
+      if (imagePath) {
+        fs.unlinkSync("./public" + imagePath);
+      }
+      return res.status(500).send({ message: error.message || error });
+    }
+  },
+  deleteProductsPicture: async (req, res) => {
+    let { id } = req.params;
+    console.log(id, "id");
+
     let conn, sql;
     try {
       conn = dbCon.promise();
 
       // get ID
-      sql = `select * from product where id = ?`;
+      sql = `select id, image from product_image where id = ?`;
       let [result] = await conn.query(sql, [id]);
       if (!result.length) {
         throw { message: "id tidak ditemukan" };
       }
 
-      sql = `delete from product_image where product_id = ?`;
-      await conn.query(sql, id);
-      sql = `insert into product_image set ?`;
-      for (let i = 0; i < imagePaths.length; i++) {
-        let insertDataImage = {
-          image: imagePaths[i],
-          product_id: id,
-        };
-        await conn.query(sql, insertDataImage);
+      // delete foto
+      sql = `delete from product_image where id = ?`;
+      await conn.query(sql, [id]);
+      // delete photo di server
+      if (result[0].image) {
+        fs.unlinkSync("./public" + result[0].image);
       }
-
-      // Berhasil edit -> hapus foto lama
-      // if (imagePath) {
-      //   // klo image baru ada maka hapus image lama
-      //   if (result[0].image) {
-      //     fs.unlinkSync("./public" + result[0].image);
-      //   }
-      // }
-
-      return res.status(200).send({ message: "Berhasil Update Obat" });
+      console.log("berhasil delet");
+      return res.status(200).send({ message: "Berhasil Delete Foto Obat" });
     } catch (error) {
       console.log(error);
-      // if (imagePath) {
-      //   fs.unlinkSync("./public" + imagePath);
-      // }
+
       return res.status(500).send({ message: error.message || error });
     }
   },
@@ -463,19 +498,21 @@ module.exports = {
       const result = await getDetailProductService(product_id);
       return res.status(200).send(result.data);
     } catch (error) {
+      conn.release();
       return res.status(500).send({ message: error.message || error });
     }
   },
   addToCartController: async (req, res) => {
     const { id } = req.user;
-    const { product_id, quantity } = req.body;
+    const { product_id, quantityCart } = req.body;
     try {
-      let result = await addToCartService(id, product_id, quantity);
+      let result = await addToCartService(id, product_id, quantityCart);
 
       return res
         .status(200)
         .send({ result, message: "Produk berhasil ditambahkan ke cart" });
     } catch (error) {
+      conn.release();
       return res.status(500).send({ message: error.message || error });
     }
   },
@@ -489,43 +526,6 @@ module.exports = {
       return res.status(500).send({ message: error.message || error });
     }
   },
-  // // edit product stock per tanggal expire
-  // editProductsStock: async (req, res) => {
-  //   console.log("ini req.body", req.body);
-
-  //   const data = JSON.parse(req.body.data);
-  //   const { stock_id } = req.params;
-
-  //   console.log(data);
-  //   let conn, sql;
-  //   try {
-  //     conn = dbCon.promise();
-
-  //     // get ID
-  //     let sql = `select * from stock where id = ?`;
-  //     let [result] = await conn.query(sql, [stock_id]);
-  //     if (!result.length) {
-  //       throw { message: "id tidak ditemukan" };
-  //     }
-
-  //     sql = `update stock set ? where id = ?`;
-
-  //     // let [result1] = await conn.query(sql, [data, stock_id]);
-  //     // if (!result1.length) {
-  //     //   throw { message: "id tidak ditemukan" };
-  //     // }
-  //     let editDataStock = {
-  //       stock: data.stock,
-  //       expired: data.expired,
-  //     };
-  //     await conn.query(sql, [editDataStock, stock_id]);
-
-  //     return res.status(200).send({ message: "Berhasil Update Stock Obat" });
-  //   } catch (error) {
-  //     console.log(error);
-  //     return res.status(500).send({ message: error.message || error });
-  //   }
-  // },
 
   deleteProducts: async (req, res) => {
     const { id } = req.params;
@@ -541,74 +541,29 @@ module.exports = {
       await conn.query(sql, id);
 
       conn.release();
-
       return res.status(200).send({ message: "Berhasil Menghapus Obat" });
     } catch (error) {
       console.log(error);
+      conn.release();
       return res.status(500).send({ message: error.message || error });
     }
   },
 
-  //   deleteProductsStock: async (req, res) => {
-  //     console.log("ini req.body", req.body);
-
-  //     const data = JSON.parse(req.body.data);
-  //     const { stock_id } = req.params;
-
-  //     console.log(data);
-  //     let conn, sql;
-  //     try {
-  //       conn = dbCon.promise();
-
-  //       // get ID
-  //       let sql = `select * from stock where id = ?`;
-  //       let [result] = await conn.query(sql, [stock_id]);
-  //       console.log("INI", id);
-  //       if (!result.length) {
-  //         throw { message: "id tidak ditemukan" };
-  //       }
-
-  //       sql = `delete stock set ? where id = ?`;
-  //       // let [result1] = await conn.query(sql, [data, stock_id]);
-  //       // if (!result1.length) {
-  //       //   throw { message: "id tidak ditemukan" };
-  //       // }
-  //       let editDataStock = {
-  //         stock: data.stock,
-  //         expired: data.expired,
-  //       };
-  //       await conn.query(sql, [editDataStock, stock_id]);
-
-  //       return res.status(200).send({ message: "Berhasil Delete Stock Obat" });
-  //     } catch (error) {
-  //       console.log(error);
-  //       return res.status(500).send({ message: error.message || error });
-  //     }
   getSelectedProduct: async (req, res) => {
     let { id } = req.params;
     let conn, sql;
     try {
       conn = await dbCon.promise().getConnection();
-      sql = `select id, name, no_obat, no_BPOM, brand_id, type_id, description, warning, product.usage from product where id = ?`;
+      sql = `select id, name, no_obat, no_BPOM, brand_id, type_id, description, warning, product.usage, unit, hargaJual, hargaBeli from product where id = ?`;
       let [product] = await conn.query(sql, id);
 
       sql = `select type.id, type.name from type inner join product on product.type_id=type.id where product.id=?`;
       let [type] = await conn.query(sql, id);
-      product[0].type_id = type.map((type) => {
-        if (type.id) {
-          return { value: type.id, label: type.name };
-        }
-        return type;
-      });
+      product[0].type_id = { value: type[0].id, label: type[0].name };
 
       sql = `select brand.id, brand.name from brand inner join product on product.brand_id=brand.id where product.id=?`;
       let [brand] = await conn.query(sql, id);
-      product[0].brand_id = brand.map((brand) => {
-        if (brand.id) {
-          return { value: brand.id, label: brand.name };
-        }
-        return brand;
-      });
+      product[0].brand_id = { value: brand[0].id, label: brand[0].name };
 
       sql = `select id, name from category_product cp inner join category c on cp.category_id = c.id where product_id = ?`;
       let [category] = await conn.query(sql, id);
@@ -627,10 +582,12 @@ module.exports = {
         }
         return symptom;
       });
-
+      console.log(product[0], "produk");
+      conn.release();
       await conn.commit();
       return res.status(200).send(product[0]);
     } catch (error) {
+      conn.release();
       console.log(error);
       return res.status(500).send({ message: error.message || error });
     }
@@ -640,11 +597,255 @@ module.exports = {
     let conn, sql;
     try {
       conn = await dbCon.promise().getConnection();
-      sql = `select id, image from product_image where product_id = ?`;
+      sql = `select id, image, product_id from product_image where product_id = ?`;
       let [product] = await conn.query(sql, id);
 
-      await conn.commit();
+      conn.release();
       return res.status(200).send(product);
+    } catch (error) {
+      conn.release();
+      console.log(error);
+      return res.status(500).send({ message: error.message || error });
+    }
+  },
+  // fetch semua expire dan stok pada id produk yang dipilih
+  getSelectedProductStock: async (req, res) => {
+    let { id } = req.params;
+    let conn, sql;
+    try {
+      conn = await dbCon.promise().getConnection();
+      sql = `select id, expired, stock from stock where product_id = ? and stock > 0  order by expired `;
+      [stock] = await conn.query(sql, id);
+      console.log(stock, "stock");
+      conn.release();
+      return res.status(200).send(stock);
+    } catch (error) {
+      console.log(error);
+      conn.release();
+      return res.status(500).send({ message: error.message || error });
+    }
+  },
+  getSelectedProductStockDetail: async (req, res) => {
+    let { id } = req.params;
+    let conn, sql;
+    try {
+      conn = await dbCon.promise().getConnection();
+      sql = `select expired, stock from stock where id = ?`;
+      [stock] = await conn.query(sql, id);
+      console.log(stock, "stock");
+      conn.release();
+      return res.status(200).send(stock[0]);
+    } catch (error) {
+      console.log(error);
+      conn.release();
+      return res.status(500).send({ message: error.message || error });
+    }
+  },
+  addProductsStock: async (req, res) => {
+    const { id } = req.user;
+    const data = req.body;
+    const { product_id } = req.params;
+    let conn, sql;
+    try {
+      console.log(id, "userid");
+      console.log(req.body, "reqbody");
+      conn = await dbCon.promise().getConnection();
+      await conn.beginTransaction();
+
+      sql = `select id, expired, stock from stock where product_id = ? and expired = ?`;
+      let [stock] = await conn.query(sql, [product_id, data.expired]);
+
+      // apabila ada tgl sama
+      let stockId;
+      if (stock.length) {
+        stockId = stock[0].id;
+        sql = `update stock set ? where id =?`;
+
+        await conn.query(sql, [
+          { stock: parseInt(data.stock) + parseInt(stock[0].stock) },
+          stock[0].id,
+        ]);
+        // update kalau ada
+      } else {
+        // insert
+
+        sql = `insert into stock set ?`;
+        let insertData = {
+          expired: data.expired,
+          stock: data.stock,
+          product_id: product_id,
+        };
+
+        let [insertStock] = await conn.query(sql, insertData);
+        stockId = insertStock.insertId;
+      }
+
+      sql = `select stock from stock where id=? `;
+      let [sumStock] = await conn.query(sql, stockId);
+      console.log(sumStock, "sumstock");
+      sql = `insert into log set ?`;
+      let insertLog = {
+        activity: "Menambah Stok",
+        quantity: data.stock,
+        stock_id: stockId,
+        user_id: id,
+        stock: sumStock[0].stock,
+      };
+
+      await conn.query(sql, insertLog);
+      await conn.commit();
+      conn.release();
+      return res.status(200).send({ message: " berhasil tambah stock" });
+    } catch (error) {
+      conn.rollback();
+      conn.release();
+      return res.status(500).send({ message: error.message || error });
+    }
+  },
+  editProductsStock: async (req, res) => {
+    let { id } = req.user;
+    const data = req.body;
+    let { stock_id } = req.params;
+    let conn, sql;
+    try {
+      conn = await dbCon.promise().getConnection();
+      await conn.beginTransaction();
+      sql = `select id, expired, stock, product_id from stock where id = ?`;
+      let [getStock] = await conn.query(sql, stock_id);
+
+      sql = `update stock set ? where id = ?`;
+      let editStock = {
+        expired: data.expired,
+        stock: data.stock,
+      };
+      await conn.query(sql, [editStock, stock_id]);
+
+      // memastikan plus atau minus
+
+      let stokChange;
+      if (getStock[0].stock == data.stock) {
+        await conn.commit();
+        conn.release();
+        return res.status(200).send({ message: "Berhasil Edit Stok" });
+      } else stokChange = data.stock - getStock[0].stock;
+
+      sql = `select stock from stock where id=? `;
+      let [sumStock] = await conn.query(sql, stock_id);
+
+      console.log(sumStock, "sumstok");
+      sql = `insert into log set ?`;
+      let insertLog = {
+        activity: "Revisi Stok",
+        quantity: stokChange,
+        stock_id: stock_id,
+        user_id: id,
+        stock: sumStock[0].stock,
+      };
+      await conn.query(sql, insertLog);
+
+      await conn.commit();
+      conn.release();
+      return res.status(200).send({ message: "Berhasil Edit Stok" });
+    } catch (error) {
+      console.log(error);
+      conn.rollback();
+      conn.release();
+      return res.status(500).send({ message: error.message || error });
+    }
+  },
+  deleteProductsStock: async (req, res) => {
+    let { id } = req.user;
+    let { stock_id } = req.params;
+    let conn, sql;
+    try {
+      conn = await dbCon.promise().getConnection();
+      await conn.beginTransaction();
+      sql = `select product_id, expired, stock from stock where id = ?`;
+      let [getStock] = await conn.query(sql, stock_id);
+
+      sql = `update stock set ? where id = ?`;
+      let deleteStock = {
+        stock: 0,
+      };
+      await conn.query(sql, [deleteStock, stock_id]);
+      console.log(getStock[0].stock, "getstok");
+      console.log(getStock[0], "getstok");
+      sql = `select stock from stock where id=? `;
+      let [sumStock] = await conn.query(sql, stock_id);
+
+      sql = `insert into log set ?`;
+      let insertLog = {
+        activity: "Menghapus Stok",
+        quantity: getStock[0].stock * -1,
+        stock_id: stock_id,
+        user_id: id,
+        stock: sumStock[0].stock,
+      };
+      await conn.query(sql, insertLog);
+
+      await conn.commit();
+      conn.release();
+      return res.status(200).send({ message: "Berhasil Menghapus Obat" });
+    } catch (error) {
+      conn.rollback();
+      conn.release();
+      console.log(error);
+      return res.status(500).send({ message: error.message || error });
+    }
+  },
+  // fetch semua expire dan stok pada id produk yang dipilih
+  getSelectedProductStock: async (req, res) => {
+    let { id } = req.params;
+    let conn, sql;
+    try {
+      conn = await dbCon.promise().getConnection();
+      sql = `select id, expired, stock from stock where product_id = ?`;
+      [stock] = await conn.query(sql, id);
+      console.log(stock, "stock");
+      await conn.commit();
+      return res.status(200).send(stock);
+    } catch (error) {
+      console.log(error);
+      return res.status(500).send({ message: error.message || error });
+    }
+  },
+  editProductsStock: async (req, res) => {
+    const data = req.body;
+    let { id } = req.params;
+    let conn, sql;
+    try {
+      conn = await dbCon.promise().getConnection();
+      sql = `select expired, stock from stock where id = ?`;
+      await conn.query(sql, id);
+
+      sql = `update stock set ? where id = ?`;
+      let editStock = {
+        expired: data.expired,
+        stock: data.stock,
+      };
+      await conn.query(sql, [editStock, id]);
+
+      await conn.commit();
+      return res.status(200).send({ message: "Berhasil Edit Stok" });
+    } catch (error) {
+      console.log(error);
+      return res.status(500).send({ message: error.message || error });
+    }
+  },
+  deleteProductsStock: async (req, res) => {
+    let { id } = req.params;
+    let conn, sql;
+    try {
+      conn = await dbCon.promise().getConnection();
+      sql = `select expired, stock from stock where id = ?`;
+      await conn.query(sql, id);
+
+      sql = `delete from stock where id = ?`;
+      await conn.query(sql, id);
+      await conn.query(sql, id);
+
+      await conn.commit();
+      return res.status(200).send({ message: "Berhasil Menghapus Obat" });
     } catch (error) {
       console.log(error);
       return res.status(500).send({ message: error.message || error });
