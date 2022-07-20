@@ -403,7 +403,7 @@ module.exports = {
     try {
       conn = await dbCon.promise().getConnection();
 
-      sql = `select * from address where user_id=? order by is_default desc`;
+      sql = `select address.id, address.address, address.phonenumber, address.firstname, address.lastname, province.name as province, city.name as city, address.city_id, address.province_id from address left join province on address.province_id= province.id left join city on address.city_id=city.id where user_id=? order by is_default desc`;
       let [allAddress] = await conn.query(sql, id);
 
       conn.release();
