@@ -77,12 +77,12 @@ module.exports = {
         // await conn.query(sql, [updateStock,product_id])
       }
 
-      conn.commit();
+      await conn.commit();
       conn.release();
       return res.status(200).send({ message: "berhasil add to cart" });
     } catch (error) {
       console.log(error);
-      conn.rollback();
+      await conn.rollback();
       conn.release();
       return res.status(500).send({ message: error.message || error });
     }
@@ -94,6 +94,8 @@ module.exports = {
 
     try {
       conn = await dbCon.promise().getConnection();
+
+      await conn.beginTransaction();
 
       sql = `select * from cart where id=?`;
       const [result] = await conn.query(sql, cart_id);
@@ -124,10 +126,12 @@ module.exports = {
       // let [resultdel] = await conn.query(sql,[id])
       // console.log('ini result qty', resultdel)
 
+      await conn.commit();
       conn.release();
       return res.status(200).send({ message: "berhasil delete cart" });
     } catch (error) {
       console.log(error);
+      await conn.rollback();
       conn.release();
       return res.status(500).send({ message: error.message || error });
     }
@@ -186,6 +190,7 @@ module.exports = {
 
     try {
       conn = await dbCon.promise().getConnection();
+      await conn.beginTransaction();
 
       sql = `select quantityCart,product_id from cart where id=?`;
       let [result] = await conn.query(sql, [cart_id]);
@@ -223,10 +228,12 @@ module.exports = {
       // }
       // await conn.query(sql, [updateStock,product_id])
 
+      await conn.commit();
       conn.release();
       return res.status(200).send({ message: "plus cart" });
     } catch (error) {
       console.log(error);
+      await conn.rollback();
       conn.release();
       return res.status(500).send({ message: error.message || error });
     }
@@ -239,6 +246,7 @@ module.exports = {
 
     try {
       conn = await dbCon.promise().getConnection();
+      await conn.beginTransaction();
 
       sql = `select quantityCart from cart where id=?`;
       let [result] = await conn.query(sql, [cart_id]);
@@ -267,10 +275,12 @@ module.exports = {
       // }
       // await conn.query(sql, [updateStock,product_id])
 
+      await conn.commit();
       conn.release();
       return res.status(200).send({ message: "min cart" });
     } catch (error) {
       console.log(error);
+      await conn.rollback();
       conn.release();
       return res.status(500).send({ message: error.message || error });
     }
@@ -382,8 +392,11 @@ module.exports = {
         let [images] = await conn.query(sql, data[i].id);
         data[i].images = images;
       }
+
+      conn.release();
     } catch (error) {
       console.log(error);
+      conn.release();
     }
   },
   getAllAddress: async (req, res) => {
@@ -412,6 +425,7 @@ module.exports = {
 
     try {
       conn = await dbCon.promise().getConnection();
+      await conn.beginTransaction();
 
       sql = `select id from address where user_id=? and is_default='yes'`;
       let [result1] = await conn.query(sql, id);
@@ -431,10 +445,12 @@ module.exports = {
       sql = `select * from address where user_id=? and is_default='yes'`;
       let [result2] = await conn.query(sql, id);
 
+      await conn.commit();
       conn.release();
       return res.status(200).send({ result2 });
     } catch (error) {
       console.log(error);
+      await conn.rollback();
       conn.release();
       return res.status(500).send({ message: error.message || error });
     }
@@ -451,6 +467,7 @@ module.exports = {
 
     try {
       conn = await dbCon.promise().getConnection();
+      await conn.beginTransaction();
 
       sql = `select transaction.user_id, transaction.id, transaction.status, transaction.recipient, transaction.transaction_number, transaction.address, address.address, address.firstname from transaction left join address on transaction.user_id = address.user_id where transaction.id =?`;
       let [resultTrans] = await conn.query(sql, [id]);
@@ -465,6 +482,7 @@ module.exports = {
       };
       await conn.query(sql, [updateTransaction, transaction_id]);
       // let transId = resultPay.insertId
+      await conn.commit();
       conn.release();
       return res.status(200).send(resultTrans);
     } catch (error) {
@@ -473,6 +491,7 @@ module.exports = {
         fs.unlinkSync("./public" + imagePath);
       }
       console.log(error);
+      await conn.rollback();
       conn.release();
       return res.status(500).send({ message: error.message || error });
     }
@@ -661,6 +680,7 @@ module.exports = {
 
     try {
       conn = await dbCon.promise().getConnection();
+      await conn.beginTransaction();
 
       sql = `update transaction set ? where id = ?`;
       let updatePayment = {
@@ -674,10 +694,12 @@ module.exports = {
       };
       await conn.query(sql, [updateLog, transaction_id]);
 
+      await conn.commit();
       conn.release();
       return res.status(200).send({ message: `berhasil update` });
     } catch (error) {
       console.log(error);
+      await conn.rollback();
       conn.release();
       return res.status(500).send({ message: error.message || error });
     }
@@ -852,7 +874,8 @@ module.exports = {
         let image = productImg[0].image;
         product[i] = { ...product[i], image };
       }
-      sql = "select stock from stock where product_id=?";
+      // sql = "select stock from stock where product_id=?";
+
       conn.release();
       return res.status(200).send({ product });
     } catch (error) {
