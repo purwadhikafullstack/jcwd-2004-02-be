@@ -121,7 +121,7 @@ module.exports = {
       await conn.commit();
       return { data, totalData };
     } catch (error) {
-      conn.rollback();
+      await conn.rollback();
       throw new Error(error.message || error);
     } finally {
       conn.release();
@@ -180,12 +180,11 @@ module.exports = {
         [result] = await conn.query(sql, product_data);
       }
 
-      conn.commit();
-      conn.release();
+      await conn.commit();
       return result[0];
     } catch (error) {
       console.log(error);
-      conn.rollback();
+      await conn.rollback();
       throw new Error(error || "Network error");
     } finally {
       conn.release();
@@ -221,8 +220,7 @@ module.exports = {
       await conn.commit();
       return { data };
     } catch (error) {
-      conn.rollback();
-      conn.release();
+      await conn.rollback();
       throw new Error(error.message || error);
     } finally {
       conn.release();
