@@ -24,18 +24,19 @@ module.exports = {
     let conn, sql;
     try {
       conn = await dbCon.promise().getConnection();
+
+      await conn.beginTransaction();
+
       sql =
         " select transaction.user_id, transaction.id, transaction.status, transaction.recipient, transaction.transaction_number, transaction.address, address.address, address.firstname  FROM transaction LEFT JOIN address ON transaction.user_id = address.user_id";
       await conn.query(sql, [id]);
-      // masuk sini kalo gaada usernya
 
       sql = "select * from address where user_id =?";
       let [result] = await conn.query(sql, [id]);
-      // masuk sini kalo gaada usernya
 
       // insert data to transaction table biar bisa isi prescription
       sql = `insert into transaction set ?`;
-      console.log(result[0].address, "ini result");
+
       let insertData = {
         status: 1,
         recipient: result[0].firstname,
@@ -71,9 +72,11 @@ module.exports = {
 
       console.log("berhasil tambah");
 
+      await conn.commit();
       conn.release();
       return res.status(200).send({ message: " berhasil tambah prescription" });
     } catch (error) {
+      await conn.rollback();
       conn.release();
       if (imagepath) {
         // kalo foto terupload dan update sql gagal maka masuk sini

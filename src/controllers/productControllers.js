@@ -29,12 +29,10 @@ module.exports = {
       return res.status(500).send({ message: error.message || error });
     }
   },
-
   getLastProduct: async (req, res) => {
     let conn, sql;
     try {
       conn = await dbCon.promise().getConnection();
-      await conn.beginTransaction();
 
       // get last tabel product & category & stock
       sql = `select product.id, name, hargaJual, hargaBeli, unit, no_obat, no_BPOM,
@@ -56,38 +54,31 @@ module.exports = {
       sql = `select count(*) as total_data from product`;
       let [totalData] = await conn.query(sql);
 
-      conn.commit();
       conn.release();
       res.set("x-total-product", totalData[0].total_data);
       return res.status(200).send(result);
     } catch (error) {
-      conn.rollback();
       conn.release();
-      // console.log(error);
       return res.status(500).send({ message: error.message || error });
     }
   },
-
   getCategoryObat: async (req, res) => {
     let conn, sql;
     try {
-      conn = await dbCon.promise().getConnection();
+      conn = dbCon.promise();
       sql = `select id, name from category`;
       let [category] = await conn.query(sql);
 
-      conn.release();
       return res.status(200).send(category);
     } catch (error) {
       console.log(error);
-      conn.release();
       return res.status(500).send({ message: error.message || error });
     }
   },
-
   getComponentObat: async (req, res) => {
     let conn, sql;
     try {
-      conn = await dbCon.promise().getConnection();
+      conn = dbCon.promise();
       sql = `select id, name from category`;
       let [category] = await conn.query(sql);
 
@@ -100,15 +91,12 @@ module.exports = {
       sql = `select id, name from type`;
       let [type] = await conn.query(sql);
 
-      conn.release();
       return res.status(200).send({ category, symptom, brand, type });
     } catch (error) {
-      conn.release();
       console.log(error);
       return res.status(500).send({ message: error.message || error });
     }
   },
-
   addProducts: async (req, res) => {
     console.log("ini req.body", req.body);
     let path = "/products";
@@ -117,6 +105,7 @@ module.exports = {
     console.log("ini data", data);
     const { products } = req.files;
     console.log("files", req.files);
+    const { id } = req.user;
 
     // looping filename
     const imagePaths = products
@@ -137,6 +126,7 @@ module.exports = {
     try {
       conn = await dbCon.promise().getConnection();
       await conn.beginTransaction();
+
       sql = `insert into product set ?`;
       let insertData = {
         name: data.name,
@@ -199,13 +189,14 @@ module.exports = {
         user_id: id,
         stock: sumStock[0].stock,
       };
+      console.log(sumStock[0].stock, "sumstok");
 
       await conn.query(sql, insertLog);
       await conn.commit();
       conn.release();
       return res.status(200).send({ message: "Berhasil Upload Obat" });
     } catch (error) {
-      conn.rollback;
+      await conn.rollback;
       conn.release();
       console.log(error);
       return res.status(500).send({ message: error.message || error });
@@ -278,7 +269,7 @@ module.exports = {
       return res.status(200).send({ message: "Berhasil Update Obat" });
     } catch (error) {
       console.log(error);
-      conn.rollback();
+      await conn.rollback();
       conn.release();
       return res.status(500).send({ message: error.message || error });
     }
@@ -323,7 +314,9 @@ module.exports = {
 
     let conn, sql;
     try {
-      conn = dbCon.promise();
+      conn = await dbCon.promise().getConnection();
+
+      await conn.beginTransaction();
 
       // get ID
       sql = `select id, image from product_image where id = ?`;
@@ -340,10 +333,14 @@ module.exports = {
         fs.unlinkSync("./public" + result[0].image);
       }
       console.log("berhasil delet");
+
+      await conn.commit();
+      conn.release();
       return res.status(200).send({ message: "Berhasil Delete Foto Obat" });
     } catch (error) {
       console.log(error);
-
+      await conn.rollback();
+      conn.release();
       return res.status(500).send({ message: error.message || error });
     }
   },
@@ -421,8 +418,6 @@ module.exports = {
     try {
       conn = await dbCon.promise().getConnection();
 
-      await conn.beginTransaction();
-
       sql = `select product.id, name, hargaJual, unit, no_obat, no_BPOM, type_name, brand_name, category_name, symptom_name, symptom_id,
       (select sum(stock) from stock where product_id = product.id) as total_stock from product
       inner join (select name as type_name, id from type) as type on product.type_id = type.id
@@ -464,16 +459,11 @@ module.exports = {
 
       let [totalData] = await conn.query(sql);
 
-      await conn.commit();
       conn.release();
-      // console.log(result);
       res.set("x-total-product", totalData[0].total_data);
-      // console.log(totalData[0].total_data);
       return res.status(200).send(result);
     } catch (error) {
-      conn.rollback();
       conn.release();
-      // console.log(error);
       return res.status(500).send({ message: error.message || error });
     }
   },
@@ -481,11 +471,11 @@ module.exports = {
     let { category_id } = req.params;
     let conn, sql;
     try {
-      conn = await dbCon.promise().getConnection();
+      conn = dbCon.promise();
+
       sql = `select id, name from category where id = ?`;
       let [category] = await conn.query(sql, category_id);
 
-      await conn.commit();
       return res.status(200).send(category);
     } catch (error) {
       console.log(error);
@@ -498,7 +488,6 @@ module.exports = {
       const result = await getDetailProductService(product_id);
       return res.status(200).send(result.data);
     } catch (error) {
-      conn.release();
       return res.status(500).send({ message: error.message || error });
     }
   },
@@ -512,7 +501,6 @@ module.exports = {
         .status(200)
         .send({ result, message: "Produk berhasil ditambahkan ke cart" });
     } catch (error) {
-      // conn.release();
       return res.status(500).send({ message: error.message || error });
     }
   },
@@ -526,7 +514,6 @@ module.exports = {
       return res.status(500).send({ message: error.message || error });
     }
   },
-
   deleteProducts: async (req, res) => {
     const { id } = req.params;
 
@@ -536,7 +523,6 @@ module.exports = {
       console.log("this is product id", id);
 
       // get ID
-
       sql = `update product set is_deleted = 'yes' where id = ?`;
       await conn.query(sql, id);
 
@@ -548,12 +534,13 @@ module.exports = {
       return res.status(500).send({ message: error.message || error });
     }
   },
-
   getSelectedProduct: async (req, res) => {
     let { id } = req.params;
     let conn, sql;
     try {
       conn = await dbCon.promise().getConnection();
+      await conn.beginTransaction();
+
       sql = `select id, name, no_obat, no_BPOM, brand_id, type_id, description, warning, product.usage, unit, hargaJual, hargaBeli from product where id = ?`;
       let [product] = await conn.query(sql, id);
 
@@ -582,11 +569,12 @@ module.exports = {
         }
         return symptom;
       });
-      console.log(product[0], "produk");
-      conn.release();
+
       await conn.commit();
+      conn.release();
       return res.status(200).send(product[0]);
     } catch (error) {
+      await conn.rollback();
       conn.release();
       console.log(error);
       return res.status(500).send({ message: error.message || error });
@@ -608,7 +596,6 @@ module.exports = {
       return res.status(500).send({ message: error.message || error });
     }
   },
-  // fetch semua expire dan stok pada id produk yang dipilih
   getSelectedProductStock: async (req, res) => {
     let { id } = req.params;
     let conn, sql;
@@ -616,7 +603,7 @@ module.exports = {
       conn = await dbCon.promise().getConnection();
       sql = `select id, expired, stock from stock where product_id = ? and stock > 0  order by expired `;
       [stock] = await conn.query(sql, id);
-      console.log(stock, "stock");
+
       conn.release();
       return res.status(200).send(stock);
     } catch (error) {
@@ -632,7 +619,7 @@ module.exports = {
       conn = await dbCon.promise().getConnection();
       sql = `select expired, stock from stock where id = ?`;
       [stock] = await conn.query(sql, id);
-      console.log(stock, "stock");
+
       conn.release();
       return res.status(200).send(stock[0]);
     } catch (error) {
@@ -697,7 +684,7 @@ module.exports = {
       conn.release();
       return res.status(200).send({ message: " berhasil tambah stock" });
     } catch (error) {
-      conn.rollback();
+      await conn.rollback();
       conn.release();
       return res.status(500).send({ message: error.message || error });
     }
@@ -719,8 +706,6 @@ module.exports = {
         stock: data.stock,
       };
       await conn.query(sql, [editStock, stock_id]);
-
-      // memastikan plus atau minus
 
       let stokChange;
       if (getStock[0].stock == data.stock) {
@@ -748,7 +733,7 @@ module.exports = {
       return res.status(200).send({ message: "Berhasil Edit Stok" });
     } catch (error) {
       console.log(error);
-      conn.rollback();
+      await conn.rollback();
       conn.release();
       return res.status(500).send({ message: error.message || error });
     }
@@ -787,13 +772,12 @@ module.exports = {
       conn.release();
       return res.status(200).send({ message: "Berhasil Menghapus Obat" });
     } catch (error) {
-      conn.rollback();
+      await conn.rollback();
       conn.release();
       console.log(error);
       return res.status(500).send({ message: error.message || error });
     }
   },
-  // fetch semua expire dan stok pada id produk yang dipilih
   getSelectedProductStock: async (req, res) => {
     let { id } = req.params;
     let conn, sql;
@@ -802,10 +786,12 @@ module.exports = {
       sql = `select id, expired, stock from stock where product_id = ?`;
       [stock] = await conn.query(sql, id);
       console.log(stock, "stock");
-      await conn.commit();
+
+      conn.release();
       return res.status(200).send(stock);
     } catch (error) {
       console.log(error);
+      conn.release();
       return res.status(500).send({ message: error.message || error });
     }
   },
@@ -825,10 +811,11 @@ module.exports = {
       };
       await conn.query(sql, [editStock, id]);
 
-      await conn.commit();
+      conn.release();
       return res.status(200).send({ message: "Berhasil Edit Stok" });
     } catch (error) {
       console.log(error);
+      conn.release();
       return res.status(500).send({ message: error.message || error });
     }
   },
@@ -844,9 +831,10 @@ module.exports = {
       await conn.query(sql, id);
       await conn.query(sql, id);
 
-      await conn.commit();
+      conn.release();
       return res.status(200).send({ message: "Berhasil Menghapus Obat" });
     } catch (error) {
+      conn.release();
       console.log(error);
       return res.status(500).send({ message: error.message || error });
     }
