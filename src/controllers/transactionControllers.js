@@ -767,7 +767,6 @@ module.exports = {
       return res.status(500).send({ message: error.message || error });
     }
   },
-
   getUserTransactionController: async (req, res) => {
     const { id } = req.user;
     const { order, filter, from_date, to_date, page, limit } = req.query;
@@ -823,7 +822,6 @@ module.exports = {
       return res.status(500).send({ message: error.message || error });
     }
   },
-
   getProductLogController: async (req, res) => {
     let { product_id } = req.params;
 
@@ -840,7 +838,6 @@ module.exports = {
       return res.status(500).send({ message: error.message || error });
     }
   },
-
   getObat: async (req, res) => {
     let conn, sql;
     try {

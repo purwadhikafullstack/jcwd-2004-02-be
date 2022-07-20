@@ -132,7 +132,7 @@ module.exports = {
       // get user's all transaction
       sql = `select transaction.id, status, expired_at, recipient, payment, courier, address, transaction_number, updated_at, created_at, prescription_number, pr_status, pr_image from transaction
             left join (select prescription_number, status as pr_status, image as pr_image, transaction_id from prescription) as prescription on transaction.id = prescription.transaction_id
-            where true ${filter} ${order} ${transaction_date} LIMIT ${dbCon.escape(
+            where true ${filter} ${transaction_date} ${order}  LIMIT ${dbCon.escape(
         offset
       )}, ${dbCon.escape(limit)}`;
       let [data] = await conn.query(sql);
@@ -162,7 +162,7 @@ module.exports = {
       // count user's total transaction
       sql = `select count(*) as total_transaction from (select transaction.id, status, expired_at, recipient, payment, courier, address, transaction_number, updated_at, created_at, prescription_number from transaction
       left join (select prescription_number, transaction_id from prescription) as prescription on transaction.id = prescription.transaction_id
-      where true  ${filter} ${order} ${transaction_date} ) as table_data`;
+      where true  ${filter} ${transaction_date} ${order}) as table_data`;
       let [totalData] = await conn.query(sql);
 
       await conn.commit();
@@ -274,7 +274,7 @@ module.exports = {
       // get user's all transaction
       sql = `select transaction.id, status, expired_at, recipient, payment, courier, address, transaction_number, updated_at, created_at, prescription_number, pr_status, pr_image from transaction
             left join (select prescription_number, status as pr_status, image as pr_image, transaction_id from prescription) as prescription on transaction.id = prescription.transaction_id
-            where true ${search} ${filter} ${sort} ${transaction_date} LIMIT ${dbCon.escape(
+            where true ${search} ${filter} ${transaction_date} ${sort}  LIMIT ${dbCon.escape(
         offset
       )}, ${dbCon.escape(limit)}`;
       let [data] = await conn.query(sql);
@@ -305,7 +305,7 @@ module.exports = {
       // count user's total transaction
       sql = `select count(*) as total_transaction from (select transaction.id, status, expired_at, recipient, payment, courier, address, transaction_number, updated_at, created_at, prescription_number from transaction
       left join (select prescription_number, transaction_id from prescription) as prescription on transaction.id = prescription.transaction_id
-      where true ${search} ${filter} ${sort} ${transaction_date}) as table_data`;
+      where true ${search} ${filter} ${transaction_date} ${sort}) as table_data`;
       let [totalData] = await conn.query(sql);
 
       await conn.commit();
