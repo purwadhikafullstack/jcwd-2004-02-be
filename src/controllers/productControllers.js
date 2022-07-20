@@ -512,7 +512,7 @@ module.exports = {
         .status(200)
         .send({ result, message: "Produk berhasil ditambahkan ke cart" });
     } catch (error) {
-      conn.release();
+      // conn.release();
       return res.status(500).send({ message: error.message || error });
     }
   },

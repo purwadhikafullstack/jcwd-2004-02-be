@@ -166,7 +166,8 @@ module.exports = {
       let result;
       if (selectedProduct.length) {
         let cart_id = selectedProduct[0].id;
-        let current_quantity = parseInt(selectedProduct[0].quantity);
+        let current_quantity = parseInt(selectedProduct[0].quantityCart);
+        console.log("ini ya", selectedProduct);
         quantity = current_quantity + quantity;
         sql = `update cart set quantityCart = ? where id = ?`;
         [result] = await conn.query(sql, [quantity, cart_id]);

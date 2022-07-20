@@ -22,6 +22,34 @@ module.exports = {
       sql = `select sum(stock) as sisa_stock from stock`;
       let [sisaStock] = await conn.query(sql);
 
+      //progress bar profit hari ini
+      sql = `select transaction_detail.id, transaction_detail.updated_at, year(transaction_detail.updated_at) as tahun, month(transaction_detail.updated_at) as bulan, weekday(transaction_detail.updated_at) as hari, sum(price*quantity) as masuk, sum(hargaBeli*quantity) as keluar, sum(price*quantity)-sum(hargaBeli*quantity) as profit, transaction.status from transaction_detail inner join transaction on transaction_detail.transaction_id = transaction.id where DATE(transaction_detail.updated_at) = CURDATE() and status='selesai'`;
+      let [profitToday] = await conn.query(sql);
+      console.log("ini profit hari ini", profitToday);
+
+      sql = `select transaction_detail.id, transaction_detail.updated_at, year(transaction_detail.updated_at) as tahun, month(transaction_detail.updated_at) as bulan, weekday(transaction_detail.updated_at) as hari, sum(price*quantity) as masuk, sum(hargaBeli*quantity) as keluar, sum(price*quantity)-sum(hargaBeli*quantity) as profit, transaction.status from transaction_detail inner join transaction on transaction_detail.transaction_id = transaction.id where DATE(transaction_detail.updated_at) = CURDATE() - 1 and status='selesai'`;
+      let [profityesterday] = await conn.query(sql);
+
+      progressProfit =
+        (profitToday[0].profit - profityesterday[0].profit) /
+        profitToday[0].profit;
+
+      //progress pesanan hari ini
+      sql = `select count(id) as pesanan_hari_ini from transaction where DATE(updated_at) = CURDATE()`;
+      let [progressPesananHariIni] = await conn.query(sql);
+
+      sql = `select count(id) as pesanan_hari_ini from transaction where DATE(updated_at) = CURDATE() - 1`;
+      let [progressPesananKemarin] = await conn.query(sql);
+
+      progressPesanan =
+        (progressPesananHariIni[0].pesanan_hari_ini -
+          progressPesananKemarin[0].pesanan_hari_ini) /
+        progressPesananHariIni[0].pesanan_hari_ini;
+
+      // progress sisa stock
+      // sql = `select sum(stock) as sisa_stock from stock`;
+      // let [sisaStock] = await conn.query(sql);
+
       // get pesanan baru
       sql = `select count(id) as pesanan_baru from transaction where status = 'menunggu pembayaran' and DATE(updated_at) = CURDATE()`;
       let [pesananBaru] = await conn.query(sql);
@@ -67,6 +95,8 @@ module.exports = {
         telahExpired,
         expiredThisMonth,
         expired3Month,
+        progressPesanan,
+        progressProfit,
       });
     } catch (error) {
       console.log(error);
