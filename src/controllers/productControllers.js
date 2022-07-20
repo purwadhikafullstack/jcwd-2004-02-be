@@ -117,6 +117,7 @@ module.exports = {
     console.log("ini data", data);
     const { products } = req.files;
     console.log("files", req.files);
+    const { id } = req.user;
 
     // looping filename
     const imagePaths = products
@@ -199,6 +200,7 @@ module.exports = {
         user_id: id,
         stock: sumStock[0].stock,
       };
+      console.log(sumStock[0].stock, "sumstok");
 
       await conn.query(sql, insertLog);
       await conn.commit();
