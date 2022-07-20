@@ -34,6 +34,8 @@ module.exports = {
         (profitToday[0].profit - profityesterday[0].profit) /
         profitToday[0].profit;
 
+      selisihProfit = profitToday[0].profit - profityesterday[0].profit;
+
       //progress pesanan hari ini
       sql = `select count(id) as pesanan_hari_ini from transaction where DATE(updated_at) = CURDATE()`;
       let [progressPesananHariIni] = await conn.query(sql);
@@ -45,6 +47,10 @@ module.exports = {
         (progressPesananHariIni[0].pesanan_hari_ini -
           progressPesananKemarin[0].pesanan_hari_ini) /
         progressPesananHariIni[0].pesanan_hari_ini;
+
+      selisihPesanan =
+        progressPesananHariIni[0].pesanan_hari_ini -
+        progressPesananKemarin[0].pesanan_hari_ini;
 
       // progress sisa stock
       // sql = `select sum(stock) as sisa_stock from stock`;
@@ -97,6 +103,8 @@ module.exports = {
         expired3Month,
         progressPesanan,
         progressProfit,
+        selisihPesanan,
+        selisihProfit,
       });
     } catch (error) {
       console.log(error);

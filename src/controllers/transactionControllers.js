@@ -358,34 +358,34 @@ module.exports = {
       return res.status(500).send({ message: error.message || error });
     }
   },
-  produkTerkait: async (req, res) => {
-    let { symptom_id } = req.query;
-    let conn, sql;
+  // produkTerkait: async (req, res) => {
+  //   let { symptom_id } = req.query;
+  //   let conn, sql;
 
-    try {
-      conn = await dbCon.promise().getConnection();
+  //   try {
+  //     conn = await dbCon.promise().getConnection();
 
-      sql = `select product_id from symptom_product where symptom_id =?`;
-      let [resultProd] = await conn.query(sql, symptom_id);
+  //     sql = `select product_id from symptom_product where symptom_id =?`;
+  //     let [resultProd] = await conn.query(sql, symptom_id);
 
-      let data = [];
-      sql = `select id, name, hargaJual, unit from product where id=? and is_deleted= 'no' limit 6`;
-      for (let i = 0; i < resultProd.length; i++) {
-        const element = resultProd[i];
-        let [dataProd] = await conn.query(sql, element.product_id);
-        data[i] = dataProd[0];
-      }
+  //     let data = [];
+  //     sql = `select id, name, hargaJual, unit from product where id=? and is_deleted= 'no' limit 6`;
+  //     for (let i = 0; i < resultProd.length; i++) {
+  //       const element = resultProd[i];
+  //       let [dataProd] = await conn.query(sql, element.product_id);
+  //       data[i] = dataProd[0];
+  //     }
 
-      let sql = `select id, image from product_image where product_id = ? limit 1`;
-      for (let i = 0; i < data.length; i++) {
-        const element = data[i];
-        let [images] = await conn.query(sql, data[i].id);
-        data[i].images = images;
-      }
-    } catch (error) {
-      console.log(error);
-    }
-  },
+  //     let sql = `select id, image from product_image where product_id = ? limit 1`;
+  //     for (let i = 0; i < data.length; i++) {
+  //       const element = data[i];
+  //       let [images] = await conn.query(sql, data[i].id);
+  //       data[i].images = images;
+  //     }
+  //   } catch (error) {
+  //     console.log(error);
+  //   }
+  // },
   getAllAddress: async (req, res) => {
     const { id } = req.user;
     let conn, sql;
