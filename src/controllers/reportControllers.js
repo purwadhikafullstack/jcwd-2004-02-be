@@ -221,7 +221,6 @@ module.exports = {
       return res.status(500).send({ message: error.message || error });
     }
   },
-
   ringkasanChart: async (req, res) => {
     let { filter } = req.query;
     let conn, sql;
@@ -320,7 +319,7 @@ module.exports = {
       where true ${tahun} and transaction.status = 'selesai' ${filter}`;
       let [hargaPokok] = await conn.query(sql);
 
-      sql = conn.release();
+      conn.release();
       return res.status(200).send({
         penjualanBarang: penjualanBarang[0] || { sum: 0 },
         hargaPokok: hargaPokok[0] || { sum: 0 },
