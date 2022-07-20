@@ -42,7 +42,6 @@ module.exports = {
       return res.status(500).send({ message: error.message || error });
     }
   },
-
   keeplogin: async (req, res) => {
     const { id } = req.user;
     let conn, sql;
@@ -55,6 +54,7 @@ module.exports = {
       return res.status(200).send(result[0]);
     } catch (error) {
       console.log(error);
+      conn.release();
       return res.status(500).send({ message: error.message || error });
     }
   },
@@ -66,6 +66,8 @@ module.exports = {
 
     try {
       conn = await dbCon.promise().getConnection();
+      await conn.beginTransaction();
+
       sql = `select password from users where id = ? and password=?`;
       let [result] = await conn.query(sql, [id, hashPass(oldPassword)]);
       console.log(result);
@@ -80,10 +82,12 @@ module.exports = {
 
       await conn.query(sql, [updateNewPass, id]);
 
-      // conn.commit()
+      await conn.commit();
       conn.release();
       return res.status(200).send({ message: "reset password success" });
     } catch (error) {
+      await conn.rollback();
+      conn.release();
       console.log(error);
       return res.status(500).send({ message: error.message || error });
     }
@@ -111,10 +115,7 @@ module.exports = {
           ? "http://namadomainfe"
           : "http://localhost:3000";
       const link = `${host}/verified/${tokenEmail}`;
-      let filePath = path.resolve(
-        __dirname,
-        "../templates/emailTemplate.html"
-      );
+      let filePath = path.resolve(__dirname, "../templates/emailTemplate.html");
 
       let htmlString = fs.readFileSync(filePath, "utf-8");
       console.log(htmlString);
@@ -157,11 +158,11 @@ module.exports = {
       sql = `select * from users where id= ?`;
       let [result] = await conn.query(sql, [id]);
       await conn.commit();
-
+      conn.release();
       return res.status(200).send(result[0]);
     } catch (error) {
-      conn.rollback();
-
+      await conn.rollback();
+      conn.release();
       console.log(error);
       return res.status(500).send({ message: error.message || error });
     }
@@ -218,6 +219,7 @@ module.exports = {
       conn.release();
       return res.status(200).send({ message: "reset password success" });
     } catch (error) {
+      conn.release();
       console.log(error);
       return res.status(500).send({ message: error.message || error });
     }

@@ -36,7 +36,6 @@ module.exports = {
       throw new Error(error.message || error);
     }
   },
-
   registerService: async (data) => {
     let { name, email, password } = data;
     let conn, sql;
@@ -66,7 +65,7 @@ module.exports = {
       conn.release();
       return { success: true, data: userData[0] };
     } catch (error) {
-      conn.rollback();
+      await conn.rollback();
       conn.release();
       console.log(error);
       throw new Error(error.message || error);
@@ -79,6 +78,7 @@ module.exports = {
 
     try {
       conn = await dbCon.promise().getConnection();
+
       sql = `select id from users where email =?`;
       let [result] = await conn.query(sql, [email]);
       if (!result.length) {
@@ -88,10 +88,10 @@ module.exports = {
       sql = `select id, name, is_verified, email from users where email =?`;
       let [userData] = await conn.query(sql, email);
       console.log("ini userdata", userData);
+
       conn.release();
       return { success: true, data: userData[0] };
     } catch (error) {
-      conn.rollback();
       conn.release();
       console.log(error);
       throw new Error(error.message || error);
