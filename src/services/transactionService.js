@@ -24,7 +24,7 @@ const rejectTransactionScheduledService = async () => {
 
         // restore the quantity back to stock
         for (let id = 0; id < selectedStock.length; id++) {
-          sql = `select id, quantity from stock where id = ?`;
+          sql = `select id, stock from stock where id = ?`;
           let [restoredStock] = await conn.query(
             sql,
             selectedStock[id].stock_id
@@ -32,9 +32,9 @@ const rejectTransactionScheduledService = async () => {
 
           let restoredValue =
             Math.abs(parseInt(selectedStock[id].quantity)) +
-            parseInt(restoredStock[0].quantity);
+            parseInt(restoredStock[0].stock);
 
-          let updateQuantityStock = { quantity: restoredValue };
+          let updateQuantityStock = { stock: restoredValue };
           sql = `update stock set ? where id = ?`;
           await conn.query(sql, [
             updateQuantityStock,
