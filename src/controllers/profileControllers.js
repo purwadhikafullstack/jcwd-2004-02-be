@@ -12,6 +12,8 @@ module.exports = {
     try {
       conn = await dbCon.promise().getConnection();
 
+      await conn.beginTransaction();
+
       sql = "update users set ? where id = ?";
       let update = {
         name: name,
@@ -26,15 +28,17 @@ module.exports = {
       let [result1] = await conn.query(sql, [id]);
 
       console.log(result1, "berhasil update bio");
+
+      await conn.commit();
       conn.release();
       return res.status(200).send(result1[0]);
     } catch (error) {
       console.log(error);
+      await conn.rollback();
       conn.release();
       return res.status(500).send({ message: error.message || error });
     }
   },
-
   editProfilePic: async (req, res) => {
     console.log(req.files);
     let path = "/profile";
@@ -47,6 +51,8 @@ module.exports = {
     let conn, sql;
     try {
       conn = await dbCon.promise().getConnection();
+
+      await conn.beginTransaction();
       // get data untuk hapus imagepath foto lama
       sql = "select * from users where id =?";
       let [result] = await conn.query(sql, [req.user.id]);
@@ -64,9 +70,12 @@ module.exports = {
       console.log("berhasil update");
       sql = `select profilepic from users where id = ?`;
       let [result1] = await conn.query(sql, [req.user.id]);
+
+      await conn.commit();
       conn.release();
       return res.status(200).send(result1[0]);
     } catch (error) {
+      await conn.rollback();
       conn.release();
       if (imagepath) {
         // kalo foto terupload dan update sql gagal maka masuk sini

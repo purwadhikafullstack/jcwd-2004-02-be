@@ -89,8 +89,6 @@ module.exports = {
     try {
       conn = await dbCon.promise().getConnection();
 
-      await conn.beginTransaction();
-
       // get tabel product & category & stock
       sql = `select product.id, name, hargaJual, hargaBeli, unit, no_obat, no_BPOM,
         (select sum(stock) from stock where product_id = product.id) as total_stock from product
@@ -118,10 +116,8 @@ module.exports = {
 
       let [totalData] = await conn.query(sql);
 
-      await conn.commit();
       return { data, totalData };
     } catch (error) {
-      conn.rollback();
       throw new Error(error.message || error);
     } finally {
       conn.release();
@@ -180,12 +176,11 @@ module.exports = {
         [result] = await conn.query(sql, product_data);
       }
 
-      conn.commit();
-      conn.release();
+      await conn.commit();
       return result[0];
     } catch (error) {
       console.log(error);
-      conn.rollback();
+      await conn.rollback();
       throw new Error(error || "Network error");
     } finally {
       conn.release();
@@ -196,8 +191,6 @@ module.exports = {
 
     try {
       conn = await dbCon.promise().getConnection();
-
-      await conn.beginTransaction();
 
       sql = `select product.id, name, hargaJual, unit, no_obat, no_BPOM, type_name, brand_name, category_name, symptom_name, symptom_id,
       (select sum(stock) from stock where product_id = product.id) as total_stock from product
@@ -218,11 +211,8 @@ module.exports = {
         data[i].images = images;
       }
 
-      await conn.commit();
       return { data };
     } catch (error) {
-      conn.rollback();
-      conn.release();
       throw new Error(error.message || error);
     } finally {
       conn.release();

@@ -127,12 +127,10 @@ module.exports = {
     try {
       conn = await dbCon.promise().getConnection();
 
-      await conn.beginTransaction();
-
       // get user's all transaction
       sql = `select transaction.id, status, expired_at, recipient, payment, courier, address, transaction_number, updated_at, created_at, prescription_number, pr_status, pr_image from transaction
             left join (select prescription_number, status as pr_status, image as pr_image, transaction_id from prescription) as prescription on transaction.id = prescription.transaction_id
-            where true ${filter} ${order} ${transaction_date} LIMIT ${dbCon.escape(
+            where true ${filter} ${transaction_date} ${order}  LIMIT ${dbCon.escape(
         offset
       )}, ${dbCon.escape(limit)}`;
       let [data] = await conn.query(sql);
@@ -162,14 +160,11 @@ module.exports = {
       // count user's total transaction
       sql = `select count(*) as total_transaction from (select transaction.id, status, expired_at, recipient, payment, courier, address, transaction_number, updated_at, created_at, prescription_number from transaction
       left join (select prescription_number, transaction_id from prescription) as prescription on transaction.id = prescription.transaction_id
-      where true  ${filter} ${order} ${transaction_date} ) as table_data`;
+      where true  ${filter} ${transaction_date} ${order}) as table_data`;
       let [totalData] = await conn.query(sql);
 
-      await conn.commit();
-      conn.release();
       return { data, totalData };
     } catch (error) {
-      conn.rollback();
       throw new Error(error.message || error);
     } finally {
       conn.release();
@@ -180,8 +175,6 @@ module.exports = {
 
     try {
       conn = await dbCon.promise().getConnection();
-
-      await conn.beginTransaction();
 
       // get user's transaction
       sql = `select transaction.id, status, created_at, expired_at, recipient, payment, courier, address, transaction_number, updated_at, prescription_number, pr_image, pr_status from transaction
@@ -208,10 +201,8 @@ module.exports = {
         data[0].subtotal = subtotal;
       }
 
-      conn.commit();
       return { data };
     } catch (error) {
-      conn.rollback();
       throw new Error(error.message || error);
     } finally {
       conn.release();
@@ -269,16 +260,13 @@ module.exports = {
     try {
       conn = await dbCon.promise().getConnection();
 
-      await conn.beginTransaction();
-
       // get user's all transaction
       sql = `select transaction.id, status, expired_at, recipient, payment, courier, address, transaction_number, updated_at, created_at, prescription_number, pr_status, pr_image from transaction
             left join (select prescription_number, status as pr_status, image as pr_image, transaction_id from prescription) as prescription on transaction.id = prescription.transaction_id
-            where true ${search} ${filter} ${sort} ${transaction_date} LIMIT ${dbCon.escape(
+            where true ${search} ${filter} ${transaction_date} ${sort}  LIMIT ${dbCon.escape(
         offset
       )}, ${dbCon.escape(limit)}`;
       let [data] = await conn.query(sql);
-      console.log();
 
       sql = `select id, name, image, quantity, price, unit from transaction_detail where transaction_id = ?`;
       for (let i = 0; i < data.length; i++) {
@@ -305,14 +293,11 @@ module.exports = {
       // count user's total transaction
       sql = `select count(*) as total_transaction from (select transaction.id, status, expired_at, recipient, payment, courier, address, transaction_number, updated_at, created_at, prescription_number from transaction
       left join (select prescription_number, transaction_id from prescription) as prescription on transaction.id = prescription.transaction_id
-      where true ${search} ${filter} ${sort} ${transaction_date}) as table_data`;
+      where true ${search} ${filter} ${transaction_date} ${sort}) as table_data`;
       let [totalData] = await conn.query(sql);
 
-      await conn.commit();
-      conn.release();
       return { data, totalData };
     } catch (error) {
-      conn.rollback();
       throw new Error(error.message || error);
     } finally {
       conn.release();
@@ -358,10 +343,9 @@ module.exports = {
       let [name] = await conn.query(sql, product_id);
 
       await conn.commit();
-      conn.release();
       return { data, totalData, totalStock, name };
     } catch (error) {
-      conn.rollback();
+      await conn.rollback();
       throw new Error(error.message || error);
     } finally {
       conn.release();
