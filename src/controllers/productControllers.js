@@ -196,7 +196,7 @@ module.exports = {
       conn.release();
       return res.status(200).send({ message: "Berhasil Upload Obat" });
     } catch (error) {
-      await conn.rollback;
+      await conn.rollback();
       conn.release();
       console.log(error);
       return res.status(500).send({ message: error.message || error });

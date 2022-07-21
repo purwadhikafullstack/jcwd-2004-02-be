@@ -112,7 +112,7 @@ module.exports = {
       const tokenEmail = createJwtEmail(dataToken);
       const host =
         process.env.NODE_ENV === "production"
-          ? "http://namadomainfe"
+          ? "https://jcwd200402.purwadhikabootcamp.com"
           : "http://localhost:3000";
       const link = `${host}/verified/${tokenEmail}`;
       let filePath = path.resolve(__dirname, "../templates/emailTemplate.html");
@@ -177,7 +177,7 @@ module.exports = {
       const tokenEmail = createJwtEmail(dataToken);
       const host =
         process.env.NODE_ENV === "production"
-          ? "http://namadomainfe"
+          ? "https://jcwd200402.purwadhikabootcamp.com"
           : "http://localhost:3000";
       const link = `${host}/verified/${tokenEmail}`;
       let filepath = path.resolve(__dirname, "../templates/emailTemplate.html");
@@ -248,7 +248,7 @@ module.exports = {
 
       const host =
         process.env.NODE_ENV === "production"
-          ? "http://namadomainfe"
+          ? "https://jcwd200402.purwadhikabootcamp.com"
           : "http://localhost:3000";
       const link = `${host}/forgotPassword/${tokenEmail}`;
       let filePath = path.resolve(
