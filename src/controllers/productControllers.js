@@ -33,7 +33,6 @@ module.exports = {
     let conn, sql;
     try {
       conn = await dbCon.promise().getConnection();
-      await conn.beginTransaction();
 
       // get last tabel product & category & stock
       sql = `select product.id, name, hargaJual, hargaBeli, unit, no_obat, no_BPOM,
@@ -55,12 +54,10 @@ module.exports = {
       sql = `select count(*) as total_data from product`;
       let [totalData] = await conn.query(sql);
 
-      await conn.commit();
       conn.release();
       res.set("x-total-product", totalData[0].total_data);
       return res.status(200).send(result);
     } catch (error) {
-      await conn.rollback();
       conn.release();
       return res.status(500).send({ message: error.message || error });
     }
@@ -108,6 +105,7 @@ module.exports = {
     console.log("ini data", data);
     const { products } = req.files;
     console.log("files", req.files);
+    const { id } = req.user;
 
     // looping filename
     const imagePaths = products
@@ -191,13 +189,14 @@ module.exports = {
         user_id: id,
         stock: sumStock[0].stock,
       };
+      console.log(sumStock[0].stock, "sumstok");
 
       await conn.query(sql, insertLog);
       await conn.commit();
       conn.release();
       return res.status(200).send({ message: "Berhasil Upload Obat" });
     } catch (error) {
-      await conn.rollback;
+      await conn.rollback();
       conn.release();
       console.log(error);
       return res.status(500).send({ message: error.message || error });
@@ -419,8 +418,6 @@ module.exports = {
     try {
       conn = await dbCon.promise().getConnection();
 
-      await conn.beginTransaction();
-
       sql = `select product.id, name, hargaJual, unit, no_obat, no_BPOM, type_name, brand_name, category_name, symptom_name, symptom_id,
       (select sum(stock) from stock where product_id = product.id) as total_stock from product
       inner join (select name as type_name, id from type) as type on product.type_id = type.id
@@ -462,12 +459,10 @@ module.exports = {
 
       let [totalData] = await conn.query(sql);
 
-      await conn.commit();
       conn.release();
       res.set("x-total-product", totalData[0].total_data);
       return res.status(200).send(result);
     } catch (error) {
-      await conn.rollback();
       conn.release();
       return res.status(500).send({ message: error.message || error });
     }

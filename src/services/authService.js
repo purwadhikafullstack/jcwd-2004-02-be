@@ -78,7 +78,7 @@ module.exports = {
 
     try {
       conn = await dbCon.promise().getConnection();
-      await conn.beginTransaction();
+
       sql = `select id from users where email =?`;
       let [result] = await conn.query(sql, [email]);
       if (!result.length) {
@@ -89,11 +89,9 @@ module.exports = {
       let [userData] = await conn.query(sql, email);
       console.log("ini userdata", userData);
 
-      await conn.commit();
       conn.release();
       return { success: true, data: userData[0] };
     } catch (error) {
-      await conn.rollback();
       conn.release();
       console.log(error);
       throw new Error(error.message || error);

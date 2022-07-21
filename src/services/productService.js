@@ -89,8 +89,6 @@ module.exports = {
     try {
       conn = await dbCon.promise().getConnection();
 
-      await conn.beginTransaction();
-
       // get tabel product & category & stock
       sql = `select product.id, name, hargaJual, hargaBeli, unit, no_obat, no_BPOM,
         (select sum(stock) from stock where product_id = product.id) as total_stock from product
@@ -118,10 +116,8 @@ module.exports = {
 
       let [totalData] = await conn.query(sql);
 
-      await conn.commit();
       return { data, totalData };
     } catch (error) {
-      await conn.rollback();
       throw new Error(error.message || error);
     } finally {
       conn.release();
@@ -166,7 +162,8 @@ module.exports = {
       let result;
       if (selectedProduct.length) {
         let cart_id = selectedProduct[0].id;
-        let current_quantity = parseInt(selectedProduct[0].quantity);
+        let current_quantity = parseInt(selectedProduct[0].quantityCart);
+        console.log("ini ya", selectedProduct);
         quantity = current_quantity + quantity;
         sql = `update cart set quantityCart = ? where id = ?`;
         [result] = await conn.query(sql, [quantity, cart_id]);
@@ -196,8 +193,6 @@ module.exports = {
     try {
       conn = await dbCon.promise().getConnection();
 
-      await conn.beginTransaction();
-
       sql = `select product.id, name, hargaJual, unit, no_obat, no_BPOM, type_name, brand_name, category_name, symptom_name, symptom_id,
       (select sum(stock) from stock where product_id = product.id) as total_stock from product
       inner join (select name as type_name, id from type) as type on product.type_id = type.id
@@ -217,10 +212,8 @@ module.exports = {
         data[i].images = images;
       }
 
-      await conn.commit();
       return { data };
     } catch (error) {
-      await conn.rollback();
       throw new Error(error.message || error);
     } finally {
       conn.release();

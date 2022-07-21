@@ -143,8 +143,6 @@ module.exports = {
     try {
       conn = await dbCon.promise().getConnection();
 
-      await conn.beginTransaction();
-
       // sql = `select cart.id, product_id, user_id, quantityCart, created_at, updated_at, product_name, hargaJual, unit
       // (select sum(stock) from stock where product_id = cart.product_id) as total_stock from cart
       // join (select name as product_name, id, hargaJual, unit from product) as product on cart.product_id = product.id
@@ -176,12 +174,10 @@ module.exports = {
       // let [resultQty] = await conn.query(sql, [product_id])
       // console.log('ini result qty', resultQty);
 
-      await conn.commit();
       conn.release();
       return res.status(200).send(resultCart);
     } catch (error) {
       console.log(error);
-      await conn.rollback();
       conn.release();
       return res.status(500).send({ message: error.message || error });
     }
@@ -372,37 +368,34 @@ module.exports = {
       return res.status(500).send({ message: error.message || error });
     }
   },
-  produkTerkait: async (req, res) => {
-    let { symptom_id } = req.query;
-    let conn, sql;
+  // produkTerkait: async (req, res) => {
+  //   let { symptom_id } = req.query;
+  //   let conn, sql;
 
-    try {
-      conn = await dbCon.promise().getConnection();
+  //   try {
+  //     conn = await dbCon.promise().getConnection();
 
-      sql = `select product_id from symptom_product where symptom_id =?`;
-      let [resultProd] = await conn.query(sql, symptom_id);
+  //     sql = `select product_id from symptom_product where symptom_id =?`;
+  //     let [resultProd] = await conn.query(sql, symptom_id);
 
-      let data = [];
-      sql = `select id, name, hargaJual, unit from product where id=? and is_deleted= 'no' limit 6`;
-      for (let i = 0; i < resultProd.length; i++) {
-        const element = resultProd[i];
-        let [dataProd] = await conn.query(sql, element.product_id);
-        data[i] = dataProd[0];
-      }
+  //     let data = [];
+  //     sql = `select id, name, hargaJual, unit from product where id=? and is_deleted= 'no' limit 6`;
+  //     for (let i = 0; i < resultProd.length; i++) {
+  //       const element = resultProd[i];
+  //       let [dataProd] = await conn.query(sql, element.product_id);
+  //       data[i] = dataProd[0];
+  //     }
 
-      let sql = `select id, image from product_image where product_id = ? limit 1`;
-      for (let i = 0; i < data.length; i++) {
-        const element = data[i];
-        let [images] = await conn.query(sql, data[i].id);
-        data[i].images = images;
-      }
-
-      conn.release();
-    } catch (error) {
-      console.log(error);
-      conn.release();
-    }
-  },
+  //     let sql = `select id, image from product_image where product_id = ? limit 1`;
+  //     for (let i = 0; i < data.length; i++) {
+  //       const element = data[i];
+  //       let [images] = await conn.query(sql, data[i].id);
+  //       data[i].images = images;
+  //     }
+  //   } catch (error) {
+  //     console.log(error);
+  //   }
+  // },
   getAllAddress: async (req, res) => {
     const { id } = req.user;
     let conn, sql;
@@ -410,7 +403,7 @@ module.exports = {
     try {
       conn = await dbCon.promise().getConnection();
 
-      sql = `select * from address where user_id=? order by is_default desc`;
+      sql = `select address.id, address.address, address.phonenumber, address.firstname, address.lastname, province.name as province, city.name as city, address.city_id, address.province_id from address left join province on address.province_id= province.id left join city on address.city_id=city.id where user_id=? order by is_default desc`;
       let [allAddress] = await conn.query(sql, id);
 
       conn.release();
@@ -868,7 +861,6 @@ module.exports = {
     let conn, sql;
     try {
       conn = await dbCon.promise().getConnection();
-      await conn.beginTransaction();
 
       sql = `select id, name, hargaJual, hargaBeli, 
       (select sum(stock) from stock where product_id = product.id) as total_stock from product order by name`;
@@ -879,13 +871,11 @@ module.exports = {
         let image = productImg[0].image;
         product[i] = { ...product[i], image };
       }
-      sql = "select stock from stock where product_id=?";
+      // sql = "select stock from stock where product_id=?";
 
-      await conn.commit();
       conn.release();
       return res.status(200).send({ product });
     } catch (error) {
-      await conn.rollback();
       conn.release();
       return res.status(500).send({ message: error.message || error });
     }
