@@ -105,6 +105,7 @@ module.exports = {
         const element = data[i];
         let [categories] = await conn.query(sql, element.id);
         data[i].categories = categories;
+        data[i] = { ...data[i], no: page * limit + (i + 1) };
       }
 
       // count tabel product & category & stock
