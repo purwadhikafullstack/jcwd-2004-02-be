@@ -11,7 +11,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MywibmFtZSI6I
 ###
 
 
-GET http://localhost:5000/transaction/getalltransaction?page=0&filter=&sort=&search=&from_date=2022-07-07&to_date=2022-07-09 HTTP/1.1
+GET http://localhost:5000/transaction/getalltransaction?from_date=2022-07-07&to_date=2022-07-09 HTTP/1.1
 Content-Type: application/json
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MywibmFtZSI6ImFkbWluIiwicm9sZV9pZCI6IkFkbWluIiwiaWF0IjoxNjU4MzE0NjQ4LCJleHAiOjE2NTgzNDM0NDh9.PYjHU8uMMQFHW4O4fuTdwwxj_L9lZJnyqXhYNSTKXJM
 
