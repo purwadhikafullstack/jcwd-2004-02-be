@@ -169,31 +169,49 @@ module.exports = {
   },
   sendEmailVerified: async (req, res) => {
     const { id, email, name } = req.body;
+    console.log("ini namanya", name, id, email);
     try {
       const dataToken = {
         id: id,
         name: name,
       };
+
       const tokenEmail = createJwtEmail(dataToken);
       const host =
         process.env.NODE_ENV === "production"
           ? "https://jcwd200402.purwadhikabootcamp.com"
           : "http://localhost:3000";
       const link = `${host}/verified/${tokenEmail}`;
-      let filepath = path.resolve(__dirname, "../templates/emailTemplate.html");
-      let htmlString = fs.readFileSync(filepath, "utf-8");
+      // let filepath = path.resolve(__dirname, "../templates/emailTemplate.html");
+      // let htmlString = fs.readFileSync(filepath, "utf-8");
+      // const template = handlebars.compile(htmlString);
+      // const htmlToEmail = template({
+      //   name: name,
+      //   link,
+      // });
+      // console.log(htmlToEmail);
+      // transporter.sendMail({
+      //   from: "Healthymed Email Verification<andhikapraset@gmail.com",
+      //   to: email,
+      //   subject: "Link Email Verification",
+      //   hmtl: htmlToEmail,
+      // });
+      let filePath = path.resolve(__dirname, "../templates/emailTemplate.html");
+
+      let htmlString = fs.readFileSync(filePath, "utf-8");
+      console.log(htmlString);
       const template = handlebars.compile(htmlString);
       const htmlToEmail = template({
         name: name,
         link,
       });
-      console.log(htmlToEmail);
       transporter.sendMail({
-        from: "Healthymed Email Verification<andhikapraset@gmail.com",
+        from: "Healthymed Email Verification<andhikapraset@gmail.com>",
         to: email,
-        subject: "Link Email Verification",
-        hmtl: htmlToEmail,
+        subject: "Healthymed",
+        html: htmlToEmail,
       });
+
       return res.status(200).send({ message: "berhasil kirim email" });
     } catch (error) {
       console.log(error);
