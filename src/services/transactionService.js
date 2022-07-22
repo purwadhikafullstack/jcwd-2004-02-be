@@ -128,12 +128,13 @@ module.exports = {
       conn = await dbCon.promise().getConnection();
 
       // get user's all transaction
-      sql = `select transaction.id, status, expired_at, recipient, payment, courier, address, transaction_number, updated_at, created_at, prescription_number, pr_status, pr_image from transaction
+      sql = `select transaction.id, user_id, status, expired_at, recipient, payment, courier, address, transaction_number, updated_at, created_at, prescription_number, pr_status, pr_image from transaction
             left join (select prescription_number, status as pr_status, image as pr_image, transaction_id from prescription) as prescription on transaction.id = prescription.transaction_id
-            where true ${filter} ${transaction_date} ${order}  LIMIT ${dbCon.escape(
+            join (select name as username, id from users) as user on transaction.user_id = user.id
+            where user.id = ?  ${filter} ${transaction_date} ${order} LIMIT ${dbCon.escape(
         offset
       )}, ${dbCon.escape(limit)}`;
-      let [data] = await conn.query(sql);
+      let [data] = await conn.query(sql, id);
 
       sql = `select id, name, image, quantity, price, unit from transaction_detail where transaction_id = ?`;
       for (let i = 0; i < data.length; i++) {
@@ -329,6 +330,11 @@ module.exports = {
         offset
       )}, ${dbCon.escape(limit)}`;
       let [data] = await conn.query(sql, product_id);
+
+      for (let i = 0; i < data.length; i++) {
+        const element = data[i];
+        data[i] = { ...data[i], no: page * limit + (i + 1) };
+      }
 
       // total stock per product
       sql = `select sum(stock) as total_stock  from stock where product_id = ?`;
