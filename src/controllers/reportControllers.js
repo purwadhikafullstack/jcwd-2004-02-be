@@ -244,13 +244,13 @@ module.exports = {
 
       conn.release();
       return res.status(200).send({
-        pesananBaru,
-        siapDikirim,
-        sedangDikirim,
-        selesai,
-        dibatalkan,
-        penjualan,
-        pendapatan,
+        pesananBaru: pesananBaru[0],
+        siapDikirim: siapDikirim[0],
+        sedangDikirim: sedangDikirim[0],
+        selesai: selesai[0],
+        dibatalkan: dibatalkan[0],
+        penjualan: penjualan[0],
+        pendapatan: pendapatan[0],
       });
     } catch (error) {
       console.log(error);
@@ -286,7 +286,7 @@ module.exports = {
       let [pendapatan] = await conn.query(sql);
 
       // avg bulanan
-      console.log(penjualan[1].jumlah, "pnjualan");
+
       let jumlahBulanan = 0;
       for (let i = 0; i < penjualan.length; i++) {
         jumlahBulanan += parseInt(penjualan[i].jumlah);
@@ -294,17 +294,13 @@ module.exports = {
       console.log(jumlahBulanan, "jumlahBulanan");
       let avgMonth = Math.round(jumlahBulanan / 12);
 
-      console.log(avgMonth, "avg");
-
       // avg mingguan
       let jumlahMingguan = 0;
       for (let i = 0; i < penjualan.length; i++) {
         jumlahMingguan += parseInt(penjualan[i].jumlah);
       }
-      console.log(jumlahMingguan, "jumlahMingguan");
-      let avgWeek = Math.round(jumlahMingguan / 7);
 
-      console.log(avgWeek, "avg");
+      let avgWeek = Math.round(jumlahMingguan / 7);
 
       conn.release();
       return res.status(200).send({

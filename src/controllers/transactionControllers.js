@@ -888,11 +888,18 @@ module.exports = {
     try {
       conn = await dbCon.promise().getConnection();
       sql =
-        "select image, prescription_number, created_at from prescription where transaction_id=? ";
+        "select image, prescription_number, nama_dokter, nama_pasien, created_at from prescription where transaction_id=? ";
       let [prescription] = await conn.query(sql, transaction_id);
 
+      sql =
+        "select name, quantity, price, hargaBeli, image, unit, dosis  from transaction_detail where transaction_id=? ";
+      let [prescriptiond] = await conn.query(sql, transaction_id);
+
       conn.release();
-      return res.status(200).send(prescription);
+      return res.status(200).send({
+        prescription: prescription[0],
+        prescriptiond,
+      });
     } catch (error) {
       conn.release();
       return res.status(500).send({ message: error.message || error });
