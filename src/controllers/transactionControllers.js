@@ -9,6 +9,7 @@ const {
   getDetailTransactionService,
   getAllTransactionService,
   getProductLogService,
+  sendOrderService,
 } = require("../services/transactionService");
 const { DateConverter } = require("../lib/dateconverter");
 
@@ -940,6 +941,18 @@ module.exports = {
       return res.status(200).send({ message: "Berhasil Upload Resep" });
     } catch (error) {
       conn.release();
+      return res.status(500).send({ message: error.message || error });
+    }
+  },
+  sendOrderController: async (req, res) => {
+    const { id } = req.user;
+    const { transaction_id } = req.params;
+
+    try {
+      const result = await sendOrderService(transaction_id);
+      return res.status(200).send(result);
+    } catch (error) {
+      console.log(error);
       return res.status(500).send({ message: error.message || error });
     }
   },

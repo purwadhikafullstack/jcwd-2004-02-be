@@ -12,10 +12,16 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MywibmFtZSI6I
 
 GET http://localhost:5000/transaction/getalltransaction? HTTP/1.1
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MywibmFtZSI6ImFkbWluIiwicm9sZV9pZCI6IkFkbWluIiwiaWF0IjoxNjU4NDA5MDk1LCJleHAiOjE2NTg0Mzc4OTV9.H-a6xw5bGOiLnsVZXI0yVJffRXKb0WIU8i0OsfIFshg
-
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MywibmFtZSI6ImFkbWluIiwicm9sZV9pZCI6IkFkbWluIiwiaWF0IjoxNjU4NDkyOTMyLCJleHAiOjE2NTg1MjE3MzJ9.k7p5OqerdrNven9ZKrkIgDHnqDpMXATsenF_g7LPdME
 ###
 
 GET  http://localhost:5000/transaction/getproductlog/1 HTTP/1.1
 Content-Type: application/json
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MywibmFtZSI6ImFkbWluIiwicm9sZV9pZCI6IkFkbWluIiwiaWF0IjoxNjU4NDA5MDk1LCJleHAiOjE2NTg0Mzc4OTV9.H-a6xw5bGOiLnsVZXI0yVJffRXKb0WIU8i0OsfIFshg
+###
+
+
+PATCH  http://localhost:5000/transaction/sendorder/15 HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MywibmFtZSI6ImFkbWluIiwicm9sZV9pZCI6IkFkbWluIiwiaWF0IjoxNjU4NDkyOTMyLCJleHAiOjE2NTg1MjE3MzJ9.k7p5OqerdrNven9ZKrkIgDHnqDpMXATsenF_g7LPdME
+###
