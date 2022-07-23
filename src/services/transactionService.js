@@ -1,6 +1,7 @@
 const { dbCon } = require("../connections");
 const fs = require("fs");
 const schedule = require("node-schedule");
+const dayjs = require("dayjs");
 
 const rejectTransactionScheduledService = async () => {
   let conn, sql;
@@ -73,7 +74,38 @@ const rejectTransactionScheduledService = async () => {
 
     await conn.commit();
     conn.release();
-    return { message: "Transaction successfully rejected by system" };
+    return { message: "Transaction rejected by system" };
+  } catch (error) {
+    await conn.rollback();
+    conn.release();
+    throw new Error(error.message || error);
+  }
+};
+
+const updateSendStatusScheduledService = async () => {
+  let conn, sql;
+
+  try {
+    conn = await dbCon.promise().getConnection();
+
+    await conn.beginTransaction();
+
+    sql = `select * from transaction where expired_at <= current_timestamp and status = 'dikirim'`;
+    let [transactionData] = await conn.query(sql);
+
+    if (transactionData.length) {
+      for (let i = 0; i < transactionData.length; i++) {
+        const element = transactionData[i];
+
+        sql = `update transaction set ? where id = ?`;
+        await conn.query(sql, [{ status: 5 }, element.id]);
+        console.log(`Transaction ${element.id} status complete by system`);
+      }
+    }
+
+    await conn.commit();
+    conn.release();
+    return { message: "Transaction status updated by system" };
   } catch (error) {
     await conn.rollback();
     conn.release();
@@ -357,8 +389,34 @@ module.exports = {
       conn.release();
     }
   },
+  sendOrderService: async (transaction_id) => {
+    let conn, sql;
+
+    try {
+      conn = await dbCon.promise().getConnection();
+      await conn.beginTransaction();
+
+      sql = `update transaction set ? where id = ?`;
+      let updateTransaction = {
+        status: "dikirim",
+        expired_at: dayjs(new Date())
+          .add(7, "day")
+          .format("YYYY-MM-DD HH:mm:ss"),
+      };
+      await conn.query(sql, [updateTransaction, transaction_id]);
+
+      await conn.commit();
+      conn.release();
+      return { message: `Transaksi berhasil dikirim` };
+    } catch (error) {
+      await conn.rollback();
+      conn.release();
+      throw new Error(error.message || error);
+    }
+  },
 };
 
 schedule.scheduleJob("*/5 * * * * *", () => {
   rejectTransactionScheduledService();
+  updateSendStatusScheduledService();
 });
