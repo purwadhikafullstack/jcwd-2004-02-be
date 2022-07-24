@@ -683,6 +683,7 @@ module.exports = {
       sql = `update transaction set ? where id = ?`;
       let updatePayment = {
         status: "diproses",
+        courier: "JNE",
       };
       await conn.query(sql, [updatePayment, transaction_id]);
 
