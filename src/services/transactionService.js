@@ -416,7 +416,7 @@ module.exports = {
   },
 };
 
-schedule.scheduleJob("*/5 * * * * *", () => {
+schedule.scheduleJob("*/5 * * * * ", () => {
   rejectTransactionScheduledService();
   updateSendStatusScheduledService();
 });
