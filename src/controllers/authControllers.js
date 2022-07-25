@@ -146,7 +146,7 @@ module.exports = {
       await conn.beginTransaction();
       sql = `select id from users where id =? and is_verified = 1`;
       let [userVerified] = await conn.query(sql, [id]);
-      console.log(req.user);
+      // console.log(req.user);
       if (userVerified.length) {
         throw { message: "kan udah verified ngapain di klik lagi" };
       }

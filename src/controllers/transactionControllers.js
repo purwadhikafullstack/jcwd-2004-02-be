@@ -9,6 +9,7 @@ const {
   getDetailTransactionService,
   getAllTransactionService,
   getProductLogService,
+  sendOrderService,
 } = require("../services/transactionService");
 const { DateConverter } = require("../lib/dateconverter");
 
@@ -682,6 +683,7 @@ module.exports = {
       sql = `update transaction set ? where id = ?`;
       let updatePayment = {
         status: "diproses",
+        courier: "JNE",
       };
       await conn.query(sql, [updatePayment, transaction_id]);
 
@@ -887,11 +889,18 @@ module.exports = {
     try {
       conn = await dbCon.promise().getConnection();
       sql =
-        "select image, prescription_number, created_at from prescription where transaction_id=? ";
+        "select image, prescription_number, nama_dokter, nama_pasien, created_at from prescription where transaction_id=? ";
       let [prescription] = await conn.query(sql, transaction_id);
 
+      sql =
+        "select name, quantity, price, hargaBeli, image, unit, dosis  from transaction_detail where transaction_id=? ";
+      let [prescriptiond] = await conn.query(sql, transaction_id);
+
       conn.release();
-      return res.status(200).send(prescription);
+      return res.status(200).send({
+        prescription: prescription[0],
+        prescriptiond,
+      });
     } catch (error) {
       conn.release();
       return res.status(500).send({ message: error.message || error });
@@ -940,6 +949,18 @@ module.exports = {
       return res.status(200).send({ message: "Berhasil Upload Resep" });
     } catch (error) {
       conn.release();
+      return res.status(500).send({ message: error.message || error });
+    }
+  },
+  sendOrderController: async (req, res) => {
+    const { id } = req.user;
+    const { transaction_id } = req.params;
+
+    try {
+      const result = await sendOrderService(transaction_id);
+      return res.status(200).send(result);
+    } catch (error) {
+      console.log(error);
       return res.status(500).send({ message: error.message || error });
     }
   },
