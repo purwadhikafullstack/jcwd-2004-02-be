@@ -28,6 +28,7 @@ const {
   getShippingCost,
   getProductLogController,
   sendOrderController,
+  receiveOrderController,
 } = transactionControllers;
 
 const { verifyTokenAccess, verifyTokenEmail } = require("../lib/verifyToken");
@@ -85,6 +86,11 @@ Router.patch(
   "/sendorder/:transaction_id",
   verifyTokenAccess,
   sendOrderController
+);
+Router.patch(
+  "/receiveorder/:transaction_id",
+  verifyTokenAccess,
+  receiveOrderController
 );
 
 module.exports = Router;
