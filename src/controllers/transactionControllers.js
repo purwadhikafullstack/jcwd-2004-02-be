@@ -10,6 +10,7 @@ const {
   getAllTransactionService,
   getProductLogService,
   sendOrderService,
+  receiveOrderService,
 } = require("../services/transactionService");
 const { DateConverter } = require("../lib/dateconverter");
 
@@ -683,6 +684,7 @@ module.exports = {
       sql = `update transaction set ? where id = ?`;
       let updatePayment = {
         status: "diproses",
+        courier: "JNE",
       };
       await conn.query(sql, [updatePayment, transaction_id]);
 
@@ -959,10 +961,23 @@ module.exports = {
     }
   },
   sendOrderController: async (req, res) => {
+    const { id } = req.user;
     const { transaction_id } = req.params;
 
     try {
-      const result = await sendOrderService(transaction_id);
+      const result = await sendOrderService(id, transaction_id);
+      return res.status(200).send(result);
+    } catch (error) {
+      console.log(error);
+      return res.status(500).send({ message: error.message || error });
+    }
+  },
+  receiveOrderController: async (req, res) => {
+    const { id } = req.user;
+    const { transaction_id } = req.params;
+
+    try {
+      const result = await receiveOrderService(transaction_id);
       return res.status(200).send(result);
     } catch (error) {
       console.log(error);

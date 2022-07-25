@@ -389,7 +389,7 @@ module.exports = {
       conn.release();
     }
   },
-  sendOrderService: async (transaction_id) => {
+  sendOrderService: async (id, transaction_id) => {
     let conn, sql;
 
     try {
@@ -414,9 +414,34 @@ module.exports = {
       throw new Error(error.message || error);
     }
   },
+  receiveOrderService: async (transaction_id) => {
+    let conn, sql;
+
+    try {
+      conn = await dbCon.promise().getConnection();
+      await conn.beginTransaction();
+
+      sql = `update transaction set ? where id = ?`;
+      let updateTransaction = {
+        status: "selesai",
+        expired_at: dayjs(new Date())
+          .add(7, "day")
+          .format("YYYY-MM-DD HH:mm:ss"),
+      };
+      await conn.query(sql, [updateTransaction, transaction_id]);
+
+      await conn.commit();
+      conn.release();
+      return { message: `pesanan berhasil diterima` };
+    } catch (error) {
+      await conn.rollback();
+      conn.release();
+      throw new Error(error.message || error);
+    }
+  },
 };
 
-schedule.scheduleJob("*/5 * * * * *", () => {
+schedule.scheduleJob("*/5 * * * * ", () => {
   rejectTransactionScheduledService();
   updateSendStatusScheduledService();
 });

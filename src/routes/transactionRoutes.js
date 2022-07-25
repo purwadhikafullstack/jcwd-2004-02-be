@@ -28,6 +28,7 @@ const {
   getShippingCost,
   getProductLogController,
   sendOrderController,
+  receiveOrderController,
 } = transactionControllers;
 
 const { verifyTokenAccess, verifyTokenEmail } = require("../lib/verifyToken");
@@ -81,6 +82,15 @@ Router.get("/getproductlog/:product_id", getProductLogController);
 Router.get("/product", getObat);
 Router.get("/pic/:transaction_id", getPrescription);
 Router.put("/submit/:transaction_id", submitPrescription);
-Router.patch("/sendorder/:transaction_id", sendOrderController);
+Router.patch(
+  "/sendorder/:transaction_id",
+  verifyTokenAccess,
+  sendOrderController
+);
+Router.patch(
+  "/receiveorder/:transaction_id",
+  verifyTokenAccess,
+  receiveOrderController
+);
 
 module.exports = Router;
