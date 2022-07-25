@@ -54,7 +54,7 @@ Router.put("/uploadPayment", verifyTokenAccess, uploader, uploadPayment);
 Router.delete("/deleteCart/:cart_id", verifyTokenAccess, deleteCart);
 Router.get("/getBank", getBank);
 Router.put("/acceptPayment/:transaction_id", acceptPayment);
-Router.post("/rejectPayment/:transaction_id", verifyTokenAccess, rejectPayment);
+Router.post("/rejectPayment/:transaction_id", rejectPayment);
 Router.get("/getShippingCost", getShippingCost);
 Router.get(
   "/waitingPayment/:transaction_id",
@@ -81,10 +81,6 @@ Router.get("/getproductlog/:product_id", getProductLogController);
 Router.get("/product", getObat);
 Router.get("/pic/:transaction_id", getPrescription);
 Router.put("/submit/:transaction_id", submitPrescription);
-Router.patch(
-  "/sendorder/:transaction_id",
-  verifyTokenAccess,
-  sendOrderController
-);
+Router.patch("/sendorder/:transaction_id", sendOrderController);
 
 module.exports = Router;
