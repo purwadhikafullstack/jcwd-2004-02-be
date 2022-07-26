@@ -751,7 +751,7 @@ module.exports = {
 
           sql = `insert into log set ?`;
           let insertLog = {
-            user_id: id,
+            // user_id: id,
             activity: "dibatalkan",
             quantity: x,
             stock_id: stock_id,

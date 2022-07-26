@@ -55,7 +55,7 @@ const rejectTransactionScheduledService = async () => {
         }
 
         sql = `update transaction set ? where id = ?`;
-        await conn.query(sql, [{ status: 6 }, element.id]);
+        await conn.query(sql, [{ status: "dibatalkan" }, element.id]);
         console.log(`Ke update bos yang ini -${element.id}`);
 
         //Update prescription status if exist
