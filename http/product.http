@@ -19,7 +19,7 @@ Content-Type: application/json
 
 ###
 
-GET http://localhost:5000/products/fetchuserproduct?category=1&order=price HTTP/1.1
+GET http://localhost:5000/products/fetchuserproduct?min_price=40000 HTTP/1.1
 Content-Type: application/json
 
 
