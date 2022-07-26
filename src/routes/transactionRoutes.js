@@ -55,7 +55,7 @@ Router.put("/uploadPayment", verifyTokenAccess, uploader, uploadPayment);
 Router.delete("/deleteCart/:cart_id", verifyTokenAccess, deleteCart);
 Router.get("/getBank", getBank);
 Router.put("/acceptPayment/:transaction_id", acceptPayment);
-Router.post("/rejectPayment/:transaction_id", verifyTokenAccess, rejectPayment);
+Router.post("/rejectPayment/:transaction_id", rejectPayment);
 Router.get("/getShippingCost", getShippingCost);
 Router.get(
   "/waitingPayment/:transaction_id",
