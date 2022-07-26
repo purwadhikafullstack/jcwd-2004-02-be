@@ -398,11 +398,22 @@ module.exports = {
       brand = ``;
     }
 
-    let price;
-    if (min_price || max_price) {
-      price = `and product.hargaJual between ${min_price} and ${max_price}`;
+    // if (min_price || max_price) {
+    //   price = `and product.hargaJual between ${min_price} and ${max_price}`;
+    // } else {
+    //   price = ``;
+    // }
+
+    if (!min_price) {
+      min_price = `and product.hargaJual >= 0`;
     } else {
-      price = ``;
+      min_price = `and product.hargaJual >= ${min_price}`;
+    }
+
+    if (!max_price) {
+      max_price = ``;
+    } else {
+      max_price = `and product.hargaJual <= ${max_price}`;
     }
 
     if (order == "name") {
@@ -426,7 +437,7 @@ module.exports = {
       inner join (select symptom_id,product_id from symptom_product ${symptom}) as symptom_product on product.id = symptom_product.product_id
       left join (select name as symptom_name, id from symptom) as symptom on symptom_id = symptom.id
       left join (select name as category_name, id from category) as kategori on category_id = kategori.id
-      where true ${search} ${category} ${type} ${brand} ${price} and product.is_deleted = 'no' group by product.id ${order} LIMIT ${dbCon.escape(
+      where true ${search} ${category} ${type} ${brand} ${min_price} ${max_price} and product.is_deleted = 'no' group by product.id ${order} LIMIT ${dbCon.escape(
         offset
       )}, ${dbCon.escape(limit)}`;
 
@@ -455,7 +466,7 @@ module.exports = {
         inner join (select symptom_id,product_id from symptom_product ${symptom}) as symptom_product on product.id = symptom_product.product_id
         left join (select name as symptom_name, id from symptom) as symptom on symptom_id = symptom.id
         left join (select name as category_name, id from category) as kategori on category_id = kategori.id
-        where true ${search} ${category} ${type} ${brand} ${price} and product.is_deleted = 'no' group by product.id) as table_data`;
+        where true ${search} ${category} ${type} ${brand} ${min_price} ${max_price} and product.is_deleted = 'no' group by product.id) as table_data`;
 
       let [totalData] = await conn.query(sql);
 

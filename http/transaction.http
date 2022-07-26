@@ -12,7 +12,8 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MywibmFtZSI6I
 
 GET http://localhost:5000/transaction/getalltransaction? HTTP/1.1
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MywibmFtZSI6ImFkbWluIiwicm9sZV9pZCI6IkFkbWluIiwiaWF0IjoxNjU4NDkyOTMyLCJleHAiOjE2NTg1MjE3MzJ9.k7p5OqerdrNven9ZKrkIgDHnqDpMXATsenF_g7LPdME
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MywibmFtZSI6ImFkbWluIiwicm9sZV9pZCI6IkFkbWluIiwiaWF0IjoxNjU4ODIyOTg3LCJleHAiOjE2NTg4NTE3ODd9.vYrXzh7hI4VRkIKYyP6Qr7lenXj1TINEW6nGEFVCX6k
+
 ###
 
 GET  http://localhost:5000/transaction/getproductlog/1 HTTP/1.1

@@ -706,7 +706,6 @@ module.exports = {
   },
   rejectPayment: async (req, res) => {
     let { transaction_id } = req.params;
-    const { id } = req.user;
     let conn, sql;
 
     try {
@@ -722,6 +721,14 @@ module.exports = {
         status: "dibatalkan",
       };
       await conn.query(sql, [updateTransaction, transaction_id]);
+
+      sql = `select * from prescription where transaction_id = ?`;
+      let [prescription] = await conn.query(sql, [transaction_id]);
+
+      if (prescription.length) {
+        sql = `update prescription set ? where transaction_id = ?`;
+        await conn.query(sql, [{ status: 2 }, transaction_id]);
+      }
 
       // mengembalikan stock
       for (let i = 0; i < resultLog.length; i++) {
@@ -958,7 +965,7 @@ module.exports = {
     const { transaction_id } = req.params;
 
     try {
-      const result = await sendOrderService(transaction_id);
+      const result = await sendOrderService(id, transaction_id);
       return res.status(200).send(result);
     } catch (error) {
       console.log(error);

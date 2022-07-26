@@ -389,7 +389,7 @@ module.exports = {
       conn.release();
     }
   },
-  sendOrderService: async (transaction_id) => {
+  sendOrderService: async (id, transaction_id) => {
     let conn, sql;
 
     try {
