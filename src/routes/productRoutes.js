@@ -35,7 +35,7 @@ const { verifyTokenAccess } = require("../lib/verifyToken");
 Router.get("/fetchdaftarproduk", getDaftarProductController);
 Router.get("/getcategory", getCategoryObat);
 Router.post("/addproduct", uploader, verifyTokenAccess, addProducts);
-Router.patch("/deleteproducts/:id", verifyTokenAccess, deleteProducts);
+Router.patch("/deleteproducts/:id", deleteProducts);
 Router.get("/component", getComponentObat);
 Router.get("/getlastproduct", getLastProduct);
 Router.get("/fetchuserproduct", getUserProduct);
@@ -58,6 +58,5 @@ Router.delete(
 );
 Router.put("/stock/edit/:stock_id", verifyTokenAccess, editProductsStock);
 Router.post("/stock/add/:product_id", verifyTokenAccess, addProductsStock);
-
 
 module.exports = Router;
